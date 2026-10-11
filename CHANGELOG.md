@@ -6,6 +6,13 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.4.0](https://github.com/scbrown/shuttle/compare/v0.3.0...v0.4.0) (2026-10-11)
+
+
+### Features
+
+* **release:** stage release PRs with the existing credential split ([#5](https://github.com/scbrown/shuttle/issues/5)) ([e077dc3](https://github.com/scbrown/shuttle/commit/e077dc35c78f4cb87f8582cb38db4891947a63e1))
+
 ## [Unreleased]
 
 ### Added
