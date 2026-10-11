@@ -17,16 +17,30 @@ name: release
 on:
   push:
     tags: ["v*"]
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: shuttle-publish-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      RELEASE_FROM_PR: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
 
@@ -36,7 +50,7 @@ jobs:
       - name: Refuse a tag that disagrees with the package
         run: |
           set -euo pipefail
-          tag="${GITHUB_REF_NAME#v}"
+          tag="${RELEASE_TAG#v}"
           pkg="$(python -c 'import shuttle; print(shuttle.__version__)')"
           echo "tag=$tag package=$pkg"
           if [ "$tag" != "$pkg" ]; then
@@ -62,7 +76,7 @@ jobs:
         # never reaches a release in the first place.
         run: |
           set -euo pipefail
-          tag="${GITHUB_REF_NAME#v}"
+          tag="${RELEASE_TAG#v}"
           python -m venv /tmp/verify
           /tmp/verify/bin/pip install --quiet dist/shuttle-*.whl
           got="$(/tmp/verify/bin/shuttle version | awk '{print $2}')"
@@ -78,14 +92,24 @@ jobs:
 
       - name: Release notes are the version's changelog section
         # Fails the release if CHANGELOG.md has no section for this tag.
-        run: python scripts/check-changelog.py --notes "$GITHUB_REF_NAME" > "$RUNNER_TEMP/notes.md"
+        run: python scripts/check-changelog.py --notes "$RELEASE_TAG" > "$RUNNER_TEMP/notes.md"
 
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "shuttle $GITHUB_REF_NAME" \
-            --notes-file "$RUNNER_TEMP/notes.md" \
-            dist/shuttle-*.whl dist/shuttle-*.tar.gz dist/checksums.txt
+          set -euo pipefail
+          if [ -n "$RELEASE_FROM_PR" ]; then
+            draft="$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)"
+            test "$draft" = true
+            gh release upload "$RELEASE_TAG" dist/shuttle-*.whl dist/shuttle-*.tar.gz dist/checksums.txt
+            gh release edit "$RELEASE_TAG" --draft=false \
+              --title "shuttle $RELEASE_TAG" \
+              --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "shuttle $RELEASE_TAG" \
+              --notes-file "$RUNNER_TEMP/notes.md" \
+              dist/shuttle-*.whl dist/shuttle-*.tar.gz dist/checksums.txt
+          fi
