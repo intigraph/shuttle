@@ -1,39 +1,27 @@
-# Release PR authentication
+# Release PR auth route
 
-This stages the credential split already prepared in Yupana PR86.
-Do not merge the producer until the required repository secret exists.
-Missing-secret preflight fails before any release action; there is no
-GITHUB_TOKEN fallback. Repository settings are not changed by this source.
+This copies the route currently running in Bobbin and Yupana: GITHUB_TOKEN
+creates the release PR and the existing operator-side scoped approval job
+unparks its bot-authored required CI. No new token or secret is required.
+The future RELEASE_PLZ_TOKEN template in Yupana PR86 is not the live route
+and is not activated here.
 
-| Operation | Credential |
-|---|---|
-| Create or refresh the version/changelog release PR | RELEASE_PLZ_TOKEN |
-| Create the tag and draft release after its reviewed merge | GITHUB_TOKEN |
-| Validate, upload immutable assets and publish in the same run | GITHUB_TOKEN |
+## Paired activation, never a settings flag alone
 
-The non-workflow identity lets the generated PR receive normal CI. The workflow
-token's tag must not be assumed to trigger a second workflow: the producer calls
-the existing guarded publisher in the same run. Keep the outside-fork approval
-policy and complete-green merge gates. A passing source test is not generated-PR
-or release acceptance. Never publish an existing public release or clobber assets.
+Keep this producer PR draft until exact-head source review and completeCI pass,
+and the existing approve-parked-release-runs.sh has reviewed enrolment for
+scbrown/shuttle installed from its normal neutral execution copy. Then enable
+the repository's Allow Actions to create and approve pull requests setting
+as the paired approved action, leaving outside-fork contributor policy intact.
+Do not widen the approver beyond the exact repo, bot-authored release branch,
+open PR, newest workflow run and no active same-workflow guard.
 
-## Exact provisioning step
+Publication retains the workflow token and same-run guarded publisher: do not
+assume the created tag triggers another workflow. The real acceptance is a
+generated release PR whose parked runs are approved by the existing scheduled
+path, complete exact-head CI, normal reviewed merge, then version-matched
+publication and a scheduled release-mode transition. SourceCI is not acceptance.
+No hand tag, synthetic release, secret copy or global fork-policy relaxation.
 
-Repository owner: create a fine-grained PAT scoped only to scbrown/shuttle,
-with Contents read/write and Pull requests read/write, using the same existing
-Yupana/Quipu release-PR identity route. Set it as the Actions repository secret
-RELEASE_PLZ_TOKEN. Use an explicit expiration and record the renewal owner/date
-in the private operational trail. Do not put a token in this repository, an issue,
-a command argument or a log. No Actions-admin or workflow-setting change is
-requested. Crew stages the wiring; the owner supplies the secret through the
-normal secret UI.
-
-## Acceptance
-
-After provisioning, exact-head review and complete source/base CI must pass.
-Observe a real producer push creating/updating its version PR, complete required
-CI on that exact generated head, its normal reviewed merge, and successful
-same-run version-matched asset publication. Then verify the scheduled release
-mode checker reports release-pr. No hand tag, synthetic release or unchecked
-manual dispatch is an acceptance substitute. Roll back source through reviewed
-revert; never delete or rewrite a published release/tag.
+Rollback uses reviewed source revert and restores the pre-change repo setting
+under the same approved plan; never rewrite a published tag or release.
