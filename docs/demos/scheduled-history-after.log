@@ -1,0 +1,10 @@
+Script started on 2026-10-15 09:56:08-04:00 [COMMAND="python docs/demos/scheduled-history.py --source "$HISTORY_DEMO_SOURCE"" <not executed on terminal>]
+Target: source fixture, real Ed25519 signatures, mocked remote graph
+Signing control: True
+Signed history reader available: True
+Empty history: UNKNOWN
+Signed control, missing due run: MISSED
+Signed control and completed due run: SUCCEEDED
+Damaged target signature: UNKNOWN
+
+Script done on 2026-10-15 09:56:08-04:00 [COMMAND_EXIT_CODE="0"]
