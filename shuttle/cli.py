@@ -348,6 +348,15 @@ def cmd_version(args) -> int:
     return 0
 
 
+def cmd_scheduled(args) -> int:
+    from .scheduled import ScheduledRefused
+    from .scheduled_cli import run
+    try:
+        return run(args)
+    except (ScheduledRefused, OSError, TypeError) as exc:
+        raise CliError(str(exc)) from exc
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="shuttle", description=__doc__)
     ap.add_argument(
@@ -356,6 +365,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--require-existing-keys", action="store_true",
                     help="refuse missing/unsafe local keys throughout this command; never generate")
     sub = ap.add_subparsers(dest="cmd", required=True)
+
+    job = sub.add_parser("scheduled", help="strict scheduled-run process port")
+    job.add_argument("action", choices=("admit", "started", "finished", "publish"))
+    job.add_argument("--config", required=True)
+    job.set_defaults(fn=cmd_scheduled)
 
     ver = sub.add_parser("version", help="print the installed version")
     ver.set_defaults(fn=cmd_version)

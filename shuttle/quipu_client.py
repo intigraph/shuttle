@@ -71,7 +71,7 @@ def _request(method: str, path: str, body: dict | None = None) -> tuple[int, dic
     req = urllib.request.Request(
         f"{server()}{path}",
         data=json.dumps(body).encode() if body is not None else None,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "X-Quipu-Client": "shuttle"},
         method=method,
     )
     tok = _auth_token()
