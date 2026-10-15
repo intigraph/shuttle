@@ -1,7 +1,7 @@
-Script started on 2026-10-15 03:32:17-04:00 [COMMAND="python docs/demos/existing-keys.py" <not executed on terminal>]
+Script started on 2026-10-15 03:32:49-04:00 [COMMAND="stty -onlcr; python docs/demos/existing-keys.py" <not executed on terminal>]
 base 7da74e1ab9d188020dbd942f207af7365fe6c2ad
 {"legacy_fixture_positive_control": true, "no_path_created": true, "strict_missing": "CAPABILITY ABSENT"}
 candidate working source
 {"legacy_fixture_positive_control": true, "no_path_created": true, "strict_missing": "REFUSED missing key"}
 
-Script done on 2026-10-15 03:32:17-04:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2026-10-15 03:32:49-04:00 [COMMAND_EXIT_CODE="0"]
