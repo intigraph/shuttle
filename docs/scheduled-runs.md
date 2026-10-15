@@ -72,3 +72,20 @@ This source capability does not load profiles, declare jobs, install software,
 change cron, authorize a release or prove a natural scheduled execution.
 Tests use real temporary Ed25519 keys and durable local outboxes with explicitly
 mocked remote transport. Live export and natural pilot proof remain separate.
+
+## Source demonstration
+
+[Recording](demos/scheduled-port.log) and [timing](demos/scheduled-port.timing)
+use actual temporary Ed25519 signatures and local outbox persistence. Remote
+transport is explicitly a test double and no child process runs. The source
+base6637866 has no scheduled port; its existing strict-signing positive control
+already verifies synthetic signatures. Implementation91423b0 adds the displayed signed
+lifecycle, exact eighteen-triple read-back, publication-only replay, and a
+negative control that refuses an altered remote-fixture triple.
+
+From a full source clone with cryptography installed, run
+`python scripts/demo-scheduled-port.py`. The small recording is retained with
+the source proposal and was replayed with
+`scriptreplay --log-out scheduled-port.log --log-timing scheduled-port.timing`.
+Download both artifacts for replay; no inline video or installed/live proof is
+claimed. This script imports the repository's isolated test fixture.

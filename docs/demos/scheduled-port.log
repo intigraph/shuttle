@@ -1,0 +1,9 @@
+Script started on 2026-10-15 04:21:43-04:00 [COMMAND="stty -onlcr; python scripts/demo-scheduled-port.py" <not executed on terminal>]
+Actual temporary Ed25519 signatures; mocked remote transport; no child process.
+Signed started persisted and independently verifies: True
+Signed hold terminal, exact remote-fixture triples: 18
+Repeat publication adds signatures: False
+Repeat publication adds knot writes: False
+Altered remote-fixture triple: REFUSED
+
+Script done on 2026-10-15 04:21:44-04:00 [COMMAND_EXIT_CODE="0"]
