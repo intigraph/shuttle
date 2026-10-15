@@ -59,7 +59,7 @@ class ScheduledRunPort:
                  eligible: Callable[[dict, int], bool],
                  max_lateness_s: int = 90, clock=time.time, query=None):
         if (not isinstance(binding, dict) or set(binding) != _FIELDS or
-                any(type(v) is not str or not v or len(v) > 2048 for v in binding.values())):
+                any(type(v) is not str or not v or len(v) > 256 for v in binding.values())):
             raise ScheduledRefused('complete bounded pinned scope required')
         if not re.fullmatch('[0-9a-f]{64}', binding['manifest_sha256']):
             raise ScheduledRefused('immutable manifest SHA256 required')
@@ -123,7 +123,7 @@ class ScheduledRunPort:
 
     def _run(self, run, scope):
         self._scope(scope)
-        if type(run) is not str or not run.startswith('scheduled-v1-') or len(run) > 24000:
+        if type(run) is not str or not run.startswith('scheduled-v1-') or len(run) > 2048:
             raise ScheduledRefused('bounded scheduled run identifier required')
         encoded = run[len('scheduled-v1-'):]
         try:

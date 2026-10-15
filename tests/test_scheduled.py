@@ -237,6 +237,18 @@ class ScheduledPortTests(unittest.TestCase):
             'failed', 'running', 'failed', terminal['at'], self.scope.agent))
         self.port.publish(self.run, self.scope, outcome)
 
+    def test_real_port_caps_scope_and_run_before_execution(self):
+        binding = asdict(self.scope)
+        binding['job'] = 'urn:example:' + 'x'*512
+        with self.assertRaises(ScheduledRefused):
+            ScheduledRunPort(binding, self.base/'oversized', host='host-a',
+                public_key=self.pk, registration='urn:example:registration',
+                identity_graph='urn:example:identity', eligible=lambda *_: True)
+        self.port.admit(self.scope, self.slot)
+        with self.assertRaises(ScheduledRefused):
+            self.port.started('scheduled-v1-' + 'x'*2048, self.scope)
+        self.assertFalse((self.base/'runs').exists())
+
     def test_eligibility_and_scope_mismatch_refuse(self):
         self.eligible = None
         with self.assertRaises(ScheduledRefused):

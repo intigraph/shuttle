@@ -21,6 +21,10 @@ refused. No missing key is generated. New execution must be inside the
 configured lateness window. Historic redelivery may publish an existing result,
 but it cannot call started a second time.
 
+The concrete port caps each scope field at256 characters and the complete
+run name at2048 characters. The generic receiver may represent larger scopes;
+those are refused by this port before execution.
+
 The run name must reversibly encode the complete scope and UTC scheduled slot
 using the external receiver's `scheduled-v1-` canonical JSON/base64url contract.
 Started signs queued-to-running and persists the log and its directories with
