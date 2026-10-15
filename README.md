@@ -133,3 +133,15 @@ Changes: [CHANGELOG.md](CHANGELOG.md).
 ## License
 
 [MIT](LICENSE)
+
+For pre-registered job identities, put `--require-existing-keys` before the
+subcommand (for example, `shuttle --require-existing-keys advance ...`). It
+requires an existing Ed25519 key owned by the current Unix user, in a regular
+0600 file; missing keys, final-component symlinks and unsafe files are refused.
+The policy covers the whole command, including export verification, and never
+creates a replacement key. Older installations reject this flag. Default
+first-use key initialization remains available for the normal registration
+ceremony. This option checks local custody, not remote registration or job
+scope admission. SDK callers can use `signing.existing_keys_only()` around an
+entire operation, or `sign_transition(..., require_existing_key=True)` for one
+signature. Parent directory custody remains the operator's responsibility.

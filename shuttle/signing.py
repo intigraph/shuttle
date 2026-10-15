@@ -25,6 +25,9 @@ and the registration graph is not itself signed.
 from __future__ import annotations
 
 import os
+import stat
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
@@ -46,6 +49,54 @@ def key_dir() -> Path:
     return Path.home() / ".config" / "shuttle" / "keys"
 
 
+_EXISTING_ONLY = ContextVar("shuttle_existing_keys_only", default=False)
+
+
+@contextmanager
+def existing_keys_only(enabled: bool = True):
+    """Opt in for an entire operation, including export verification.
+
+    A nested default CLI operation cannot weaken an enclosing strict context.
+    The context is restored even when signing or export fails.
+    """
+    if type(enabled) is not bool:
+        raise SigningError("existing-key policy must be boolean")
+    token = _EXISTING_ONLY.set(_EXISTING_ONLY.get() or enabled)
+    try:
+        yield
+    finally:
+        _EXISTING_ONLY.reset(token)
+
+
+def load_existing(agent: str, root: Path | None = None) -> Ed25519PrivateKey:
+    """Load an owned regular 0600 key without any generation or path creation.
+
+    Open without following the final symlink, then validate that SAME descriptor.
+    Nonblocking open prevents a FIFO from hanging admission before its type check.
+    """
+    if not agent or "/" in agent or agent.startswith("."):
+        raise SigningError(f"agent name {agent!r} is not a safe key filename")
+    path = (root or key_dir()) / f"{agent}.pk8"
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            metadata = os.fstat(fd)
+            if (not stat.S_ISREG(metadata.st_mode) or
+                    stat.S_IMODE(metadata.st_mode) != 0o600 or metadata.st_uid != os.getuid()):
+                raise SigningError("existing key must be an owned regular 0600 file")
+            pem = os.read(fd, 16385)
+        finally:
+            os.close(fd)
+        if len(pem) > 16384:
+            raise SigningError("existing key exceeds the bounded key-file size")
+        key = serialization.load_pem_private_key(pem, password=None)
+    except (OSError, ValueError, TypeError) as exc:
+        raise SigningError("cannot load the existing signing key") from exc
+    if not isinstance(key, Ed25519PrivateKey):
+        raise SigningError("existing key is not ed25519")
+    return key
+
+
 def load_or_generate(agent: str, root: Path | None = None) -> Ed25519PrivateKey:
     """The agent's private key, generating it 0600 on first use.
 
@@ -53,6 +104,8 @@ def load_or_generate(agent: str, root: Path | None = None) -> Ed25519PrivateKey:
     exists is loaded, never regenerated (regenerating would orphan every
     signature already in the graph).
     """
+    if _EXISTING_ONLY.get():
+        return load_existing(agent, root)
     if not agent or "/" in agent or agent.startswith("."):
         raise SigningError(f"agent name {agent!r} is not a safe key filename")
     root = root or key_dir()
@@ -109,9 +162,13 @@ def sign_transition(
     to_state: str,
     at: str,
     root: Path | None = None,
+    *,
+    require_existing_key: bool = False,
 ) -> str:
-    """Hex signature over the canonical message, by the agent's own key."""
-    key = load_or_generate(agent, root)
+    """Hex signature over the unchanged canonical transition message."""
+    if type(require_existing_key) is not bool:
+        raise SigningError("existing-key policy must be boolean")
+    key = load_existing(agent, root) if require_existing_key else load_or_generate(agent, root)
     return key.sign(
         transition_message(run_iri, step, from_state, to_state, at, agent)
     ).hex()

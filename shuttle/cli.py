@@ -353,6 +353,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "-V", "--version", action="version", version=f"shuttle {__version__}"
     )
+    ap.add_argument("--require-existing-keys", action="store_true",
+                    help="refuse missing/unsafe local keys throughout this command; never generate")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     ver = sub.add_parser("version", help="print the installed version")
@@ -427,7 +429,8 @@ def main(argv: list[str] | None = None) -> int:
 
     args = ap.parse_args(argv)
     try:
-        return args.fn(args)
+        with signing.existing_keys_only(args.require_existing_keys):
+            return args.fn(args)
     except (
         CliError,
         model.WorkflowError,

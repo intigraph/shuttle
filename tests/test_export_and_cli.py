@@ -83,6 +83,29 @@ class CliFlowTests(EnvIsolatedCase):
         }))
         return str(p)
 
+    def test_strict_cli_refuses_missing_key_before_transition_and_export(self):
+        self.run_cli("define", self._define())
+        self.run_cli("start", "triage", "strict-run", "--agent", "agent-a")
+        before = list(state.records())
+        code, _ = self.run_cli("--require-existing-keys", "advance", "strict-run",
+                               "--step", "claim", "--agent", "agent-a")
+        self.assertEqual(2, code)
+        self.assertEqual(before, list(state.records()))
+        self.assertFalse(list(Path(self._keys.name).iterdir()))
+        self.assertEqual(0, self.run_cli("keys", "init", "agent-a")[0])
+        self.assertEqual(0, self.run_cli("--require-existing-keys", "advance", "strict-run",
+                                       "--step", "claim", "--agent", "agent-a")[0])
+        key = Path(self._keys.name) / "agent-a.pk8"
+        key.unlink()
+        with mock.patch.object(qc, "probe_graph_kinds", return_value=[]):
+            self.assertEqual(2, self.run_cli("--require-existing-keys", "export")[0])
+        self.assertFalse(key.exists())
+        # Earlier unsigned definition/start records may drain; the signed
+        # transition remains pending at its exact sequence.
+        self.assertEqual(2, state.watermark())
+        self.assertFalse(any("TransitionEvent" in body.get("turtle", "")
+                             for _, body in self.posts))
+
     def test_the_full_flow_folds_signs_and_exports(self):
         code, _ = self.run_cli("define", self._define())
         self.assertEqual(0, code)
