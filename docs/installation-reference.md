@@ -147,4 +147,3 @@ entire operation, or `sign_transition(..., require_existing_key=True)` for one
 signature. Parent directory custody remains the operator's responsibility.
 
 ## The stack
-
