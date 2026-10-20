@@ -12,3 +12,8 @@ test: check
 # The cross-repo acceptance: a live quipu, a full run, a freeze.
 e2e quipu_bin="quipu":
     @bash scripts/e2e_slice.sh {{quipu_bin}}
+
+# Verify the standalone installer using private release fixtures.
+installer-check:
+    sh -n install.sh
+    python3 scripts/test-install-release.py
