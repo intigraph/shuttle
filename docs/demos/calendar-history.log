@@ -1,0 +1,9 @@
+Script started on 2026-10-20 23:37:12-04:00 [COMMAND="python3 scripts/demo-calendar-history.py" <not executed on terminal>]
+Explicit occurrence: CalendarOccurrence(scheduled_at=1793020620, next_deadline=1793629020, zone='America/New_York')
+UTC difference: 608400
+Signed control, missing target: MISSED
+Signed target: SUCCEEDED
+Empty history: UNKNOWN
+Temporary keys + mocked transport only; not natural/runtime acceptance.
+
+Script done on 2026-10-20 23:37:12-04:00 [COMMAND_EXIT_CODE="0"]

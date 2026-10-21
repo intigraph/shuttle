@@ -1,0 +1,7 @@
+Script started on 2026-10-20 22:32:56-04:00 [COMMAND="python3 scripts/demo-scheduled-calendar.py" <not executed on terminal>]
+2026-10-26T13:17:00+00:00 old-fixed-policy= True calendar-policy= True
+2026-11-02T14:17:00+00:00 old-fixed-policy= False calendar-policy= True
+2026-11-02T13:17:00+00:00 old-fixed-policy= True calendar-policy= False
+Synthetic local policy only; not installed admission or runtime acceptance.
+
+Script done on 2026-10-20 22:32:56-04:00 [COMMAND_EXIT_CODE="0"]

@@ -59,6 +59,17 @@ The trusted local config has exactly `binding`, `host`, `public_key`,
 `max_lateness_s`. State root must be absolute and persistent, with a provisioned existing parent.
 The port creates at most the root itself and fsyncs its parent entry as well. Cadence is a
 fixed interval of at least sixty seconds with an explicit activation boundary.
+Alternatively, replace only `interval_s` with `weekday` (Monday=0..Sunday=6),
+`local_time` (HH:MM) and `timezone` (IANA identifier). These two exact field
+sets cannot be mixed. Calendar anchors must match the pinned weekday/time and
+be unambiguous. Each integer UTC slot is converted into that zone, checked
+against the local weekday/time, and round-tripped with both fold values.
+Gaps and both occurrences of an overlap refuse; no time shifting or first-fold
+selection. The activation boundary is inclusive. For Monday09:17 New York,
+October26 2026 is13:17Z and November2 is14:17Z,608400 seconds later.
+The runtime owner must bind those exact calendar qualifiers in the eligibility
+query as well as the pinned configuration. This adds admission, not a timer or
+a calendar-aware history/deadline reader; those remain receiver/reader contracts.
 No past-slot bootstrap is implied.
 
 The eligibility SELECT is compiled and reviewed by the runtime owner, stored
