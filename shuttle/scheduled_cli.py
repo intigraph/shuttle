@@ -5,6 +5,8 @@ reviewed and pinned by the runtime owner. None of it comes from a delivery.
 No child command, scheduler, registration or automatic key creation is provided.
 """
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import json
 import re
 from pathlib import Path
@@ -42,6 +44,65 @@ def _json(raw):
     return value
 
 
+def cadence(config):
+    """Validate pinned local policy before any graph or key access.
+
+    Existing fixed configurations retain their exact field contract. Calendar
+    configurations replace interval_s with weekday/local_time/timezone.
+    """
+    common = {'binding', 'host', 'public_key', 'registration', 'identity_graph',
+              'state_root', 'declaration_graph', 'eligibility_query',
+              'anchor_s', 'effective_from_s', 'max_lateness_s'}
+    fixed = set(config) == common | {'interval_s'}
+    weekly = set(config) == common | {'weekday', 'local_time', 'timezone'}
+    if not (fixed or weekly):
+        raise ScheduledRefused('complete single-form pinned configuration required')
+    anchor, effective = (config[k] for k in ('anchor_s', 'effective_from_s'))
+    if (type(anchor) is not int or not 0 <= anchor <= 253402214400 or
+            type(effective) is not int or not anchor <= effective <= 253402214400):
+        raise ScheduledRefused('bounded cadence anchor and activation boundary required')
+    if fixed:
+        interval = config['interval_s']
+        if type(interval) is not int or interval < 60:
+            raise ScheduledRefused('explicit fixed cadence required')
+        return lambda slot: (type(slot) is int and effective <= slot <= 253402214400 and
+                             (slot-anchor) % interval == 0)
+    weekday, local_time, zone_name = (config[k] for k in ('weekday', 'local_time', 'timezone'))
+    if (type(weekday) is not int or not 0 <= weekday <= 6 or
+            type(local_time) is not str or
+            not re.fullmatch(r'(?:[01][0-9]|2[0-3]):[0-5][0-9]', local_time) or
+            type(zone_name) is not str or not 0 < len(zone_name) <= 255):
+        raise ScheduledRefused('weekly weekday/HH:MM/IANA zone required')
+    try:
+        zone = ZoneInfo(zone_name)
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise ScheduledRefused('valid IANA zone required') from exc
+    hour, minute = map(int, local_time.split(':'))
+
+    def matches(slot):
+        if type(slot) is not int or not 0 <= slot <= 253402214400:
+            return False
+        try:
+            local = datetime.fromtimestamp(slot, zone)
+            if (local.weekday() != weekday or local.hour != hour or
+                    local.minute != minute or local.second != 0 or local.microsecond != 0):
+                return False
+            naive = local.replace(tzinfo=None)
+            candidates = set()
+            for fold in (0, 1):
+                utc = naive.replace(tzinfo=zone, fold=fold).astimezone(timezone.utc)
+                if utc.astimezone(zone).replace(tzinfo=None) == naive:
+                    candidates.add(int(utc.timestamp()))
+            # Neither gap shifting nor choosing one occurrence of a fold.
+            return candidates == {slot}
+        except (OverflowError, OSError, ValueError):
+            return False
+
+    if not matches(anchor):
+        raise ScheduledRefused('anchor does not match unambiguous weekly policy')
+    return lambda slot: type(slot) is int and slot >= effective and matches(slot)
+
+
 def run(args):
     # Read bounded input first; an invalid delivery cannot touch the config,
     # a key, a local outbox, or the graph. No credentials are printed.
@@ -57,23 +118,14 @@ def run(args):
     slot = packet['scheduled_at']
     with Path(args.config).open() as config_file:
         config = _json(config_file.read(65537))
-    fields = {'binding', 'host', 'public_key', 'registration', 'identity_graph',
-              'state_root', 'declaration_graph', 'eligibility_query',
-              'interval_s', 'anchor_s', 'effective_from_s', 'max_lateness_s'}
-    if set(config) != fields:
-        raise ScheduledRefused('complete pinned local configuration required')
+    matches = cadence(config)
     graph = _iri(config['declaration_graph'])
     query = config['eligibility_query']
     if (type(query) is not str or not query.lstrip().upper().startswith('SELECT ') or
             not re.search(r'\bLIMIT\s+2\s*$', query, re.IGNORECASE)):
         raise ScheduledRefused('reviewed declaration SELECT required')
-    interval, anchor, effective = (config[k] for k in ('interval_s', 'anchor_s', 'effective_from_s'))
-    if (type(interval) is not int or interval < 60 or type(anchor) is not int or anchor < 0 or
-            type(effective) is not int or effective < anchor):
-        raise ScheduledRefused('explicit fixed cadence and activation boundary required')
-
     def eligible(binding, scheduled_at):
-        if (scheduled_at < effective or (scheduled_at-anchor) % interval != 0):
+        if not matches(scheduled_at):
             return False
         rows = _rows(qc.query(query, graph=graph), 2)
         return (len(rows) == 1 and set(rows[0]) == {'eligible'} and
