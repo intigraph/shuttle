@@ -10,8 +10,10 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("knowledge", ROOT / "scripts/build-repository-knowledge.py")
@@ -63,12 +65,12 @@ class IndexIsolation(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             with patch.dict(os.environ, {"HOME": "/synthetic-parent", "XDG_CONFIG_HOME": "/synthetic-global",
                                          "BOBBIN_SERVER": "https://invalid.example", "QUIPU_AUTH_TOKEN": "synthetic-only"}):
-                env = builder.index_environment(Path(folder))
-            self.assertEqual(env["HOME"], str(Path(folder) / "index-home"))
-            self.assertEqual(env["XDG_CONFIG_HOME"], str(Path(folder) / "index-config"))
+                env = builder.isolated_environment(Path(folder))
+            self.assertEqual(env["HOME"], str(Path(folder) / "native-home"))
+            self.assertEqual(env["XDG_CONFIG_HOME"], str(Path(folder) / "native-config"))
             self.assertNotIn("BOBBIN_SERVER", env)
             self.assertNotIn("QUIPU_AUTH_TOKEN", env)
-            self.assertEqual(list((Path(folder) / "index-config").iterdir()), [])
+            self.assertEqual(list((Path(folder) / "native-config").iterdir()), [])
 
 
 class AlignmentCarrier(unittest.TestCase):
@@ -100,6 +102,94 @@ class AlignmentCarrier(unittest.TestCase):
             (target / "alignment-status.json").write_text(json.dumps(status))
             with self.assertRaisesRegex(ValueError, "mapping data"):
                 builder.alignment_carrier(root)
+
+
+    def test_native_alignment_transport_is_advertised_and_hash_bound(self):
+        import hashlib
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            private = root / "private"
+            private.mkdir()
+            for name, usage in (
+                ("current", "[--queries <name>]... [--alignments <file>] [--turtle]"),
+                ("older", "[--queries <name>]... [--turtle]"),
+            ):
+                engine = root / name
+                # Real engines print share usage to stderr and exit nonzero.
+                engine.write_text(f"#!/bin/sh\necho 'usage: quipu share {usage}' >&2\nexit 1\n")
+                engine.chmod(0o755)
+            self.assertTrue(builder.native_alignments(root / "current", private))
+            self.assertFalse(builder.native_alignments(root / "older", private))
+            reviewed = ROOT / "docs/knowledge/alignments.ttl"
+            stage = root / "share"
+            stage.mkdir()
+            shutil.copyfile(reviewed, stage / "alignments.ttl")
+            manifest = {
+                "alignments_hash": "sha256:"
+                + hashlib.sha256(reviewed.read_bytes()).hexdigest(),
+                "files": {"alignments": "alignments.ttl"},
+            }
+            (stage / "manifest.json").write_text(json.dumps(manifest))
+            builder.verify_carried_alignments(stage, reviewed)
+            for corrupt in (
+                {**manifest, "alignments_hash": manifest["alignments_hash"][7:]},
+                {**manifest, "files": {}},
+            ):
+                (stage / "manifest.json").write_text(json.dumps(corrupt))
+                with self.assertRaisesRegex(ValueError, "reviewed alignments"):
+                    builder.verify_carried_alignments(stage, reviewed)
+            (stage / "manifest.json").write_text(json.dumps(manifest))
+            with (stage / "alignments.ttl").open("a") as copied:
+                copied.write("<urn:x> <urn:p> <urn:y> .\n")
+            with self.assertRaisesRegex(ValueError, "reviewed alignments"):
+                builder.verify_carried_alignments(stage, reviewed)
+            (stage / "alignments.ttl").unlink()
+            with self.assertRaisesRegex(ValueError, "reviewed alignments"):
+                builder.verify_carried_alignments(stage, reviewed)
+
+
+class NativeIsolation(unittest.TestCase):
+    def test_real_subprocess_cannot_see_synthetic_global_config_or_endpoints(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            host, private = root / "host", root / "private"
+            private.mkdir()
+            config = host / ".config/bobbin"
+            config.mkdir(parents=True)
+            (config / "config.toml").write_text('[server]\nurl="http://127.0.0.1:9"\n')
+            self.assertTrue((config / "config.toml").exists())
+            code = (
+                "import os,json;from pathlib import Path;"
+                'visible=(Path(os.environ["HOME"])/".config/bobbin/config.toml").exists();'
+                "remote=any(k in os.environ for k in "
+                '("BOBBIN_SERVER","BOBBIN_QUIPU_REMOTE","QUIPU_SERVER","QUIPU_AUTH_TOKEN","GH_TOKEN"));'
+                'print(json.dumps({"global_config_visible":visible,"remote_or_upload_env_visible":remote}));'
+                "raise SystemExit(3 if visible or remote else 0)"
+            )
+            environment = {
+                "HOME": str(host),
+                "XDG_CONFIG_HOME": str(host / ".config"),
+                "BOBBIN_SERVER": "http://127.0.0.1:9",
+                "BOBBIN_QUIPU_REMOTE": "http://127.0.0.1:9",
+                "QUIPU_SERVER": "http://127.0.0.1:9",
+                "QUIPU_AUTH_TOKEN": "synthetic-only",
+                "GH_TOKEN": "synthetic-only",
+            }
+            with patch.dict(os.environ, environment):
+                output = builder.command([sys.executable, "-c", code], cwd=private)
+                policy_code = code.replace(
+                    "3 if visible or remote else 0", "0 if visible and remote else 3"
+                )
+                policy = builder.command(
+                    [sys.executable, "-c", policy_code],
+                    env=dict(os.environ),
+                    cwd=private,
+                )
+            self.assertIn('"global_config_visible": false', output)
+            self.assertIn('"remote_or_upload_env_visible": false', output)
+            self.assertIn('"global_config_visible": true', policy)
+            self.assertIn('"remote_or_upload_env_visible": true', policy)
 
 
 class Knowledge(unittest.TestCase):

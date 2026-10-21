@@ -1,6 +1,6 @@
 {
-  "source_revision": "67ec0d108ce9d51207fdff1ce10b1d1241cad82a",
-  "reviewed_at": "2026-10-21T00:05:39.939993Z",
+  "source_revision": "33001f173986a0496b3fc9f0afe4ebc658e2618f",
+  "reviewed_at": "2026-10-21T23:38:05.033622Z",
   "max_age_seconds": 2592000,
   "records": [
     {
@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Shuttle records workflow transitions in a local append-only JSONL log and exports signed history into governed, time-windowed Quipu graphs.",
-      "source_sha256": "d5ae89b2dda09cd6a7d292b34f4335737088845372924630a1c510d8b455086d",
+      "source_sha256": "af53641f5f1d6b5a191f477cd40742cfb5ef5e8d2a37ffe4dc2af34563d3d82f",
       "type": "Concept"
     },
     {
@@ -66,7 +66,7 @@
         "publicName": "Quipu client"
       },
       "depends_on": [
-        "https://github.com/scbrown/quipu"
+        "http://aegis.gastown.local/ontology/repo_quipu"
       ]
     },
     {
@@ -80,7 +80,7 @@
         "publicName": "Seed-step reconciliation"
       },
       "depends_on": [
-        "https://github.com/scbrown/seeds"
+        "http://aegis.gastown.local/ontology/repo_seeds"
       ]
     },
     {
@@ -100,7 +100,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Begin with the workflow quick start and role in the stack; registration and production writes remain explicit operator actions.",
-      "source_sha256": "d5ae89b2dda09cd6a7d292b34f4335737088845372924630a1c510d8b455086d",
+      "source_sha256": "af53641f5f1d6b5a191f477cd40742cfb5ef5e8d2a37ffe4dc2af34563d3d82f",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Decision"

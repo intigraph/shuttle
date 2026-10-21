@@ -116,6 +116,7 @@ jobs:
 
   repository-pendant:
     name: Verify repository pendant
+    if: vars.SHUTTLE_PENDANT_PUBLICATION == 'enabled'
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -131,3 +132,22 @@ jobs:
           fetch-depth: 0
       - name: Verify the bounded public pointer corpus
         run: python3 scripts/verify-repository-share.py "$RELEASE_TAG" "$(git rev-parse HEAD)"
+
+  repository-pendant-admission:
+    name: Record repository pendant admission
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PENDANT_PUBLICATION: ${{ vars.SHUTTLE_PENDANT_PUBLICATION }}
+    steps:
+      - name: Record the publication decision
+        run: |
+          set -euo pipefail
+          if [ "$PENDANT_PUBLICATION" = enabled ]; then
+            state="ADMITTED: pendant verification remains required"
+          else
+            state="NOT ADMITTED: no trusted Shuttle pendant publisher is enabled"
+          fi
+          printf '%s\n' "$state" | tee -a "$GITHUB_STEP_SUMMARY"

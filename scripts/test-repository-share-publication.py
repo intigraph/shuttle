@@ -6,6 +6,10 @@
 
 import importlib.util
 import json
+import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -118,6 +122,86 @@ class Publication(unittest.TestCase):
         with patch.object(Path, "lstat", side_effect=PermissionError("synthetic denied")):
             with self.assertRaisesRegex(ValueError, "cannot inspect publication hold"):
                 publisher.held()
+
+    def test_optional_alignment_member_is_declared_and_hash_bound(self):
+        import hashlib
+        data = b"@prefix sssom: <https://w3id.org/sssom/> .\n"
+        member = self.stage / "alignments.ttl"
+        member.write_bytes(data)
+        manifest = json.loads((self.stage / "manifest.json").read_text())
+        bound = {**manifest, "alignments_hash": "sha256:" + hashlib.sha256(data).hexdigest(),
+                 "files": {"alignments": "alignments.ttl"}}
+        (self.stage / "manifest.json").write_text(json.dumps(bound))
+        self.prepare()
+        tag = self.proof["release_tag"]
+        self.assertEqual(verifier.verify(self.root, tag, self.revision)["source_revision"], self.revision)
+        for invalid in (
+            manifest,
+            {**bound, "files": {}},
+            {**bound, "alignments_hash": bound["alignments_hash"][7:]},
+            {**bound, "files": {"alignments": "other.ttl"}},
+        ):
+            (self.stage / "manifest.json").write_text(json.dumps(invalid))
+            with self.assertRaisesRegex(ValueError, "alignment member"):
+                publisher.check_share(self.stage)
+        (self.stage / "manifest.json").write_text(json.dumps(bound))
+        member.write_bytes(data + b"# tampered\n")
+        with self.assertRaisesRegex(ValueError, "alignment member"):
+            publisher.check_share(self.stage)
+        member.unlink()
+        with self.assertRaisesRegex(ValueError, "alignment member"):
+            publisher.check_share(self.stage)
+        (self.stage / "manifest.json").write_text(json.dumps(manifest))
+        publisher.check_share(self.stage)
+
+    def test_readonly_verifier_keeps_nonpython_checkout_clean(self):
+        source = self.root / "clean-source"
+        (source / "scripts").mkdir(parents=True)
+        for name in (
+            "verify-repository-share.py",
+            "publish_repository_share.py",
+            "build-repository-share.py",
+            "build-repository-knowledge.py",
+        ):
+            shutil.copyfile(ROOT / name, source / "scripts" / name)
+        subprocess.run(["git", "init", "-q", str(source)], check=True)
+        subprocess.run(["git", "-C", str(source), "add", "."], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(source),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.org",
+                "commit",
+                "-qm",
+                "fixture",
+            ],
+            check=True,
+        )
+        environment = dict(os.environ)
+        environment.pop("PYTHONDONTWRITEBYTECODE", None)
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(source / "scripts/verify-repository-share.py"),
+                "not-a-release",
+                "a" * 40,
+            ],
+            cwd=source,
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid release identity", result.stderr)
+        status = subprocess.check_output(
+            ["git", "-C", str(source), "status", "--porcelain"], text=True
+        )
+        self.assertEqual(status, "")
 
     def test_wait_is_bounded(self):
         calls, pauses = [], []

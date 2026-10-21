@@ -9,6 +9,9 @@ shapes travel with the share.
 
 `alignments.ttl` is currently a valid empty SSSOM/RDF carrier. Its accompanying
 status file explicitly records zero approved mappings and seals those bytes.
+An engine advertising `share --alignments` carries this reviewed file physically,
+with its exact manifest filename and SHA-256 binding. Older engines retain the
+inline empty carrier without adding an undeclared archive member.
 This is not evidence of global absence. Missing, changed or malformed input
 refuses; an explicit empty carrier does not. Dependencies and glossary references
 are not identity alignments. Code/commit deduplication and unrelated exactMatch
@@ -21,8 +24,10 @@ record may produce derived identity through the engine's existing apply path.
 The current source profile deliberately does not import arbitrary nonempty
 mapping data until an actual curated artifact and its transport are reviewed.
 
-The copied release workflow verifies the three public assets only after the
-ordinary release finishes. The managed trusted host runs this repository's own
+The copied release workflow verifies the three public assets after the ordinary
+release finishes only when `SHUTTLE_PENDANT_PUBLICATION` is exactly `enabled`.
+A separate job records the admission state; `NOT ADMITTED` does not claim
+verified assets or enable a producer. The managed trusted host runs this repository's own
 publisher, keeps its publication policy private, pins both native engine
 executables and the indexer, and refuses retained uncertain upload outcomes.
 Default configuration still publishes only the existing Quipu corpus. Enabling

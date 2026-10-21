@@ -15,24 +15,46 @@ import sqlite3
 import io
 import tarfile
 import subprocess
+import sys
 
+
+def isolated_environment(private):
+    """Native workers must not inherit a host endpoint or credential catalogue."""
+    private = Path(private)
+    env = dict(os.environ)
+    for key in list(env):
+        if key in {
+            "BOBBIN_SERVER",
+            "QUIPU_SERVER",
+            "QUIPU_DB",
+            "QUIPU_AUTH_TOKEN",
+            "QUIPU_AUTH_TOKEN_FILE",
+            "GH_TOKEN",
+            "GITHUB_TOKEN",
+        } or key.startswith("BOBBIN_QUIPU_"):
+            env.pop(key)
+    for key, name in (
+        ("HOME", "native-home"),
+        ("XDG_CONFIG_HOME", "native-config"),
+        ("XDG_DATA_HOME", "native-data"),
+        ("XDG_CACHE_HOME", "native-cache"),
+    ):
+        directory = private / name
+        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        env[key] = str(directory)
+    return env
 
 def command(args, *, env=None, cwd=None):
-    return subprocess.run([str(v) for v in args], check=True, capture_output=True, text=True, env=env, cwd=cwd).stdout
-
-
-def index_environment(private):
-    """Keep user-global endpoints and credentials outside private indexing."""
-    env = {k: v for k, v in os.environ.items()
-           if k not in ("BOBBIN_SERVER", "BOBBIN_QUIPU_REMOTE") and not k.startswith("QUIPU_")}
-    for key, name in (("HOME", "index-home"), ("XDG_CONFIG_HOME", "index-config")):
-        folder = Path(private) / name
-        folder.mkdir(mode=0o700)
-        env[key] = str(folder)
-    # Models are public cached artifacts, not host configuration. Preserve an
-    # explicitly configured cache; otherwise resolve its original default.
-    env.setdefault("XDG_CACHE_HOME", str(Path.home() / ".cache"))
-    return env
+    if env is None and cwd is not None:
+        env = isolated_environment(cwd)
+    return subprocess.run(
+        [str(v) for v in args],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=cwd,
+    ).stdout
 
 
 def local_mcp(binary, database, calls):
@@ -64,6 +86,7 @@ def local_mcp(binary, database, calls):
         stderr=subprocess.PIPE,
         text=True,
         cwd=Path(database).parent,
+        env=isolated_environment(Path(database).parent),
     ) as process:
         selector = selectors.DefaultSelector()
         selector.register(process.stdout, selectors.EVENT_READ)
@@ -187,6 +210,34 @@ def alignment_carrier(source):
     return data.decode()
 
 
+def native_alignments(binary, private):
+    """Engines that advertise --alignments carry the reviewed physical file.
+
+    Older engines keep the inline empty carrier and never emit an undeclared
+    archive member that an older receiver would refuse.
+    """
+    usage = subprocess.run(
+        [str(binary), "share", "--help"],
+        capture_output=True,
+        text=True,
+        env=isolated_environment(private),
+        cwd=private,
+    )
+    return "--alignments <file>" in usage.stdout + usage.stderr
+
+def verify_carried_alignments(stage, alignments):
+    data = Path(alignments).read_bytes()
+    carried = json.loads((Path(stage) / "manifest.json").read_text())
+    copied = Path(stage) / "alignments.ttl"
+    if (
+        carried.get("alignments_hash") != "sha256:" + hashlib.sha256(data).hexdigest()
+        or carried.get("files", {}).get("alignments") != "alignments.ttl"
+        or not copied.is_file()
+        or copied.read_bytes() != data
+    ):
+        raise ValueError("native share did not carry the reviewed alignments")
+
+
 def build(revision, source, tooling, binary, bobbin, output):
     repository = "scbrown/shuttle"
     source, tooling, output = map(Path, (source, tooling, output))
@@ -212,7 +263,7 @@ def build(revision, source, tooling, binary, bobbin, output):
         return command(args, env=env, cwd=private)
 
     policy = private / "policy.ttl"
-    run(["python3", tooling / "scripts/private-share-policy.py", policy])
+    run(["python3", tooling / "scripts/private-share-policy.py", policy], env=dict(os.environ))
     corpus = materialize_release(source, revision, private / "source")
     (corpus / ".bobbin").mkdir(exist_ok=True)
     index_database = private / "indexed-graph.db"
@@ -239,7 +290,7 @@ entities = false
 model = "all-MiniLM-L6-v2"
 batch_size = 64
 """)
-    env = index_environment(private)
+    env = isolated_environment(private)
     run([bobbin, "index", index, "--source", corpus, "--repo", slug, "--force", "--skip-calibrate", "--json"], env=env)
     database = private / "producer.db"
     if not index_database.is_file():
@@ -282,7 +333,12 @@ batch_size = 64
         "repository_knowledge", source / "scripts/build-repository-knowledge.py"
     )
     generator = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(generator)
+    _previous_bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        spec.loader.exec_module(generator)
+    finally:
+        sys.dont_write_bytecode = _previous_bytecode
     records = json.loads(registry_path.read_text())["records"]
     labels = indexed_labels(binary, database, sorted({record["subject"] for record in records}))
     knowledge.write_text(
@@ -294,7 +350,11 @@ batch_size = 64
     register_queries(binary, database, json.loads(queries.read_text()))
     query = (source / "queries/repository-share-shuttle.rq").read_text()
     stage = private / "share"
-    run([binary, "share", "--construct", query, "--turtle", "--output", stage, "--db", database])
+    native = native_alignments(binary, private)
+    run([binary, "share", "--construct", query, "--turtle", "--output", stage]
+        + (["--alignments", alignments] if native else []) + ["--db", database])
+    if native:
+        verify_carried_alignments(stage, alignments)
     if not (stage / "shapes.ttl").is_file() or (stage / "shapes.ttl").stat().st_size == 0:
         raise ValueError("repository share omitted receiver shapes")
     receiver = private / "receiver.db"
