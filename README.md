@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"/></a>
   <a href="https://github.com/scbrown/quipu"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the quipu stack"/></a>
 </p>
 
@@ -132,7 +132,7 @@ Changes: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-[MIT](LICENSE)
+[Apache-2.0](LICENSE). Releases up to and including v0.5.0 were published under the MIT License and remain available under it.
 
 For pre-registered job identities, put `--require-existing-keys` before the
 subcommand (for example, `shuttle --require-existing-keys advance ...`). It
