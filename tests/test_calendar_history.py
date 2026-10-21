@@ -63,7 +63,8 @@ class CalendarHistoryTests(unittest.TestCase):
         args = dict(now=self.slot+20, occurrence=self.target, positive=self.positive)
         args.update(changes)
         posts = len(self.f.posts)
-        with mock.patch.object(signing, 'load_or_generate', side_effect=AssertionError('private key')), \
+        with mock.patch.object(self.reader.verifier, 'measure', side_effect=AssertionError('fixed cadence')), \
+                mock.patch.object(signing, 'load_or_generate', side_effect=AssertionError('private key')), \
                 mock.patch.object(signing, 'load_existing', side_effect=AssertionError('private key')):
             result = self.reader.measure(**args)
         self.assertEqual(len(self.f.posts), posts)
