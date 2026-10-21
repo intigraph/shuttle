@@ -6,6 +6,14 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.5.0](https://github.com/scbrown/shuttle/compare/v0.4.0...v0.5.0) (2026-10-21)
+
+
+### Features
+
+* **history:** verify explicit weekly calendar occurrences ([#14](https://github.com/scbrown/shuttle/issues/14)) ([220ced2](https://github.com/scbrown/shuttle/commit/220ced2f8c6efd653e58bf60253e51a741a884e1))
+* **scheduled:** admit pinned weekly wall-clock slots ([#12](https://github.com/scbrown/shuttle/issues/12)) ([b1baeca](https://github.com/scbrown/shuttle/commit/b1baecaf5d8be2c78824735e4265d3ccd7044a1c))
+
 ## [0.4.0](https://github.com/scbrown/shuttle/compare/v0.3.0...v0.4.0) (2026-10-11)
 
 
