@@ -155,6 +155,24 @@ class ScheduledPortTests(unittest.TestCase):
             self.assertEqual({'action': action, 'result': 'verified'}, json.loads(out.getvalue()))
         self.assertEqual(18, len(self.facts))
 
+    def test_calendar_cli_preserves_real_signing_and_publication(self):
+        from datetime import datetime, timezone
+        from shuttle import scheduled_cli
+        # Reuse the actual four-phase signing/publication driver with only the
+        # pinned policy changed. Temporary keys and mocked graph stay explicit.
+        original = scheduled_cli._json
+        local = datetime.fromtimestamp(self.slot, timezone.utc)
+
+        def calendar(raw):
+            value = original(raw)
+            if 'interval_s' in value:
+                value.pop('interval_s')
+                value.update(weekday=local.weekday(), local_time=local.strftime('%H:%M'), timezone='UTC')
+            return value
+
+        with mock.patch.object(scheduled_cli, '_json', side_effect=calendar):
+            self.test_actual_cli_protocol_with_real_signing_and_mocked_remote()
+
     def test_cli_malformed_or_oversized_packet_cannot_touch_config_or_graph(self):
         import io
         from shuttle import cli
