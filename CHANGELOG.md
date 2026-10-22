@@ -6,6 +6,13 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.6.0](https://github.com/scbrown/shuttle/compare/v0.5.0...v0.6.0) (2026-10-22)
+
+
+### Features
+
+* ship source-bound Shuttle repository pendants ([#11](https://github.com/scbrown/shuttle/issues/11)) ([f1525de](https://github.com/scbrown/shuttle/commit/f1525def9a35d1ad2411d757b6c64e9dc59d93cb))
+
 ## [0.5.0](https://github.com/scbrown/shuttle/compare/v0.4.0...v0.5.0) (2026-10-21)
 
 
