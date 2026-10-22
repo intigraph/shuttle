@@ -6,6 +6,13 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.6.1](https://github.com/scbrown/shuttle/compare/v0.6.0...v0.6.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* refresh README witnesses after stack table sync ([#18](https://github.com/scbrown/shuttle/issues/18)) ([24e52a4](https://github.com/scbrown/shuttle/commit/24e52a4dcbeafbe002472f365d6e1465b4ecd850))
+
 ## [0.6.0](https://github.com/scbrown/shuttle/compare/v0.5.0...v0.6.0) (2026-10-22)
 
 
