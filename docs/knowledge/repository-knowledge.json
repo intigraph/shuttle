@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Shuttle records workflow transitions in a local append-only JSONL log and exports signed history into governed, time-windowed Quipu graphs.",
-      "source_sha256": "af53641f5f1d6b5a191f477cd40742cfb5ef5e8d2a37ffe4dc2af34563d3d82f",
+      "source_sha256": "e35b6cc11e514c76fe29c05b6603a47b3bebf6f6e4904088b68e753ed7f7c3c5",
       "type": "Concept"
     },
     {
@@ -100,7 +100,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Begin with the workflow quick start and role in the stack; registration and production writes remain explicit operator actions.",
-      "source_sha256": "af53641f5f1d6b5a191f477cd40742cfb5ef5e8d2a37ffe4dc2af34563d3d82f",
+      "source_sha256": "e35b6cc11e514c76fe29c05b6603a47b3bebf6f6e4904088b68e753ed7f7c3c5",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Decision"
