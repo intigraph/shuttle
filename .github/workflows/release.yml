@@ -113,3 +113,41 @@ jobs:
               --notes-file "$RUNNER_TEMP/notes.md" \
               dist/shuttle-*.whl dist/shuttle-*.tar.gz dist/checksums.txt
           fi
+
+  repository-pendant:
+    name: Verify repository pendant
+    if: vars.SHUTTLE_PENDANT_PUBLICATION == 'enabled'
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
+      - name: Verify the bounded public pointer corpus
+        run: python3 scripts/verify-repository-share.py "$RELEASE_TAG" "$(git rev-parse HEAD)"
+
+  repository-pendant-admission:
+    name: Record repository pendant admission
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PENDANT_PUBLICATION: ${{ vars.SHUTTLE_PENDANT_PUBLICATION }}
+    steps:
+      - name: Record the publication decision
+        run: |
+          set -euo pipefail
+          if [ "$PENDANT_PUBLICATION" = enabled ]; then
+            state="ADMITTED: pendant verification remains required"
+          else
+            state="NOT ADMITTED: no trusted Shuttle pendant publisher is enabled"
+          fi
+          printf '%s\n' "$state" | tee -a "$GITHUB_STEP_SUMMARY"

@@ -120,5 +120,33 @@ if command == "upload" and os.environ["CONTROL"] == "upload-failed":
                 self.assertTrue(all("--clobber" not in call for call in calls))
 
 
+class PendantAdmissionTests(unittest.TestCase):
+    def test_verification_requires_explicit_publisher_admission(self):
+        workflow = yaml.load((ROOT / ".github/workflows/release.yml").read_text(), Loader=yaml.BaseLoader)
+        verify = workflow["jobs"]["repository-pendant"]
+        self.assertEqual(verify["if"], "vars.SHUTTLE_PENDANT_PUBLICATION == 'enabled'")
+        self.assertEqual(verify["needs"], "release")
+        self.assertEqual(verify["permissions"], {"contents": "read"})
+        self.assertIn("scripts/verify-repository-share.py", verify["steps"][-1]["run"])
+        self.assertEqual(verify["timeout-minutes"], "45")
+
+    def test_actual_recorded_state_is_truthful_without_publishing(self):
+        workflow = yaml.load((ROOT / ".github/workflows/release.yml").read_text(), Loader=yaml.BaseLoader)
+        job = workflow["jobs"]["repository-pendant-admission"]
+        self.assertEqual(job["env"]["PENDANT_PUBLICATION"], "${{ vars.SHUTTLE_PENDANT_PUBLICATION }}")
+        self.assertEqual(job["needs"], "release")
+        for value in ("", "disabled", "enabled", "true", "ENABLED", " enabled"):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as scratch:
+                summary = Path(scratch) / "summary"
+                result = subprocess.run(["/bin/bash", "-c", job["steps"][0]["run"]],
+                    env={"PATH": "/usr/bin:/bin", "PENDANT_PUBLICATION": value,
+                         "GITHUB_STEP_SUMMARY": str(summary)},
+                    capture_output=True, text=True, timeout=5)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                expected = "ADMITTED:" if value == "enabled" else "NOT ADMITTED:"
+                self.assertTrue(result.stdout.startswith(expected), result.stdout)
+                self.assertEqual(summary.read_text(), result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
