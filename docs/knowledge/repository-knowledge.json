@@ -1,14 +1,14 @@
 {
-  "source_revision": "33001f173986a0496b3fc9f0afe4ebc658e2618f",
-  "reviewed_at": "2026-10-21T23:38:05.033622Z",
+  "source_revision": "d9c5a8646b5063bfdeb95401a8ff69f2dad78242",
+  "reviewed_at": "2026-10-24T03:35:26.188814Z",
   "max_age_seconds": 2592000,
   "records": [
     {
       "kind": "idea",
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
-      "summary": "Shuttle records workflow transitions in a local append-only JSONL log and exports signed history into governed, time-windowed Quipu graphs.",
-      "source_sha256": "fa05782b45f3fe77b56d59c22c57de6409fcda5cf3bc6008058b2df1d2d674c3",
+      "summary": "Shuttle records signed agent workflow transitions in append-only records and exports their evidence to Quipu.",
+      "source_sha256": "964ce6b302291a32c23a9feee377dabfd778d3b7e4d79cfe2e06f368f02843de",
       "type": "Concept"
     },
     {
@@ -100,7 +100,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Begin with the workflow quick start and role in the stack; registration and production writes remain explicit operator actions.",
-      "source_sha256": "fa05782b45f3fe77b56d59c22c57de6409fcda5cf3bc6008058b2df1d2d674c3",
+      "source_sha256": "964ce6b302291a32c23a9feee377dabfd778d3b7e4d79cfe2e06f368f02843de",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Decision"
