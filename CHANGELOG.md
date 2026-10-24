@@ -6,6 +6,28 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.6.1](https://github.com/scbrown/shuttle/compare/v0.6.0...v0.6.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* refresh README witnesses after stack table sync ([#18](https://github.com/scbrown/shuttle/issues/18)) ([24e52a4](https://github.com/scbrown/shuttle/commit/24e52a4dcbeafbe002472f365d6e1465b4ecd850))
+
+## [0.6.0](https://github.com/scbrown/shuttle/compare/v0.5.0...v0.6.0) (2026-10-22)
+
+
+### Features
+
+* ship source-bound Shuttle repository pendants ([#11](https://github.com/scbrown/shuttle/issues/11)) ([f1525de](https://github.com/scbrown/shuttle/commit/f1525def9a35d1ad2411d757b6c64e9dc59d93cb))
+
+## [0.5.0](https://github.com/scbrown/shuttle/compare/v0.4.0...v0.5.0) (2026-10-21)
+
+
+### Features
+
+* **history:** verify explicit weekly calendar occurrences ([#14](https://github.com/scbrown/shuttle/issues/14)) ([220ced2](https://github.com/scbrown/shuttle/commit/220ced2f8c6efd653e58bf60253e51a741a884e1))
+* **scheduled:** admit pinned weekly wall-clock slots ([#12](https://github.com/scbrown/shuttle/issues/12)) ([b1baeca](https://github.com/scbrown/shuttle/commit/b1baecaf5d8be2c78824735e4265d3ccd7044a1c))
+
 ## [0.4.0](https://github.com/scbrown/shuttle/compare/v0.3.0...v0.4.0) (2026-10-11)
 
 

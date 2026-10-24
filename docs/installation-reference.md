@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/scbrown/shuttle/main/assets/logo.svg" width="220" alt="Shuttle logo — a weaving shuttle carrying a red weft thread through vertical warp threads, with a small knot seal below"/>
+  <img src="assets/logo.svg" width="220" alt="Shuttle logo — a weaving shuttle carrying a red weft thread through vertical warp threads, with a small knot seal below"/>
 </p>
 
 <h1 align="center">shuttle</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/scbrown/shuttle/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"/></a>
   <a href="https://github.com/scbrown/quipu"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the quipu stack"/></a>
 </p>
 
@@ -29,6 +29,8 @@ Consumers — [shantytown](https://github.com/scbrown/shantytown) crews,
 [creel](https://github.com/scbrown/creel) tabs,
 [NeuralAmplifier](https://github.com/scbrown/NeuralAmplifier) — read the
 graph, never shuttle.
+
+## Stack overview
 
 ## Role in the stack
 
@@ -132,7 +134,7 @@ Changes: [CHANGELOG.md](https://github.com/scbrown/shuttle/blob/main/CHANGELOG.m
 
 ## License
 
-[MIT](https://github.com/scbrown/shuttle/blob/main/LICENSE)
+[Apache-2.0](https://github.com/scbrown/shuttle/blob/main/LICENSE). Releases up to and including v0.5.0 were published under the MIT License and remain available under it.
 
 For pre-registered job identities, put `--require-existing-keys` before the
 subcommand (for example, `shuttle --require-existing-keys advance ...`). It
@@ -145,5 +147,3 @@ ceremony. This option checks local custody, not remote registration or job
 scope admission. SDK callers can use `signing.existing_keys_only()` around an
 entire operation, or `sign_transition(..., require_existing_key=True)` for one
 signature. Parent directory custody remains the operator's responsibility.
-
-## The stack

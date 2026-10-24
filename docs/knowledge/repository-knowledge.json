@@ -1,0 +1,130 @@
+{
+  "source_revision": "d9c5a8646b5063bfdeb95401a8ff69f2dad78242",
+  "reviewed_at": "2026-10-24T03:35:26.188814Z",
+  "max_age_seconds": 2592000,
+  "records": [
+    {
+      "kind": "idea",
+      "source": "README.md",
+      "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
+      "summary": "Shuttle records signed agent workflow transitions in append-only records and exports their evidence to Quipu.",
+      "source_sha256": "964ce6b302291a32c23a9feee377dabfd778d3b7e4d79cfe2e06f368f02843de",
+      "type": "Concept"
+    },
+    {
+      "kind": "interface",
+      "source": "shuttle/cli.py",
+      "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fcli.py",
+      "summary": "The CLI defines and advances workflows, exports history, verifies signatures and freezes windows. It has no HTTP or MCP server.",
+      "source_sha256": "c4255c23dc66050d2a8f8e928123db08ae9b7d1dddcb27018db464b8efbc6931",
+      "properties": {
+        "interfaceKind": "CLI",
+        "publicName": "shuttle"
+      }
+    },
+    {
+      "kind": "interface",
+      "source": "shuttle/state.py",
+      "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fstate.py",
+      "summary": "SHUTTLE_STATE_DIR selects local append-only workflow state; otherwise the user state directory is used.",
+      "source_sha256": "d1f0b8428753c569725b925d22e08d25d8590dc1d2a9f2106d172c7d44b74a5b",
+      "properties": {
+        "interfaceKind": "config",
+        "publicName": "SHUTTLE_STATE_DIR"
+      }
+    },
+    {
+      "kind": "interface",
+      "source": "shuttle/signing.py",
+      "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fsigning.py",
+      "summary": "SHUTTLE_KEY_DIR selects agent key storage; require-existing-key mode refuses missing or unsafe key files and does not create replacements.",
+      "source_sha256": "4e9a268d068030989e5131bb8d4d9e83e671b3c9e497aaa8fbd10449acc246e3",
+      "properties": {
+        "interfaceKind": "config",
+        "publicName": "SHUTTLE_KEY_DIR / existing_keys_only"
+      }
+    },
+    {
+      "kind": "interface",
+      "source": "shuttle/model.py",
+      "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fmodel.py",
+      "summary": "Workflow definitions and transition events are pure data models; replay folds validated transitions to reconstruct state.",
+      "source_sha256": "b6be4c052d4abda4965815da0e9a44d85dc19df2224e8cc29e1bb117f5126198",
+      "properties": {
+        "interfaceKind": "file-format",
+        "publicName": "Workflow definition JSON and transition records"
+      }
+    },
+    {
+      "kind": "interface",
+      "source": "shuttle/quipu_client.py",
+      "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fquipu_client.py",
+      "summary": "The client uses Quipu HTTP graph, knot and episode APIs. Capability and write refusals are distinct from empty results; it does not serve REST itself.",
+      "source_sha256": "9037e275caf804b0e9a5a0234631d92f85558b1c5cb7c9f09e2a5b541f622df7",
+      "properties": {
+        "interfaceKind": "library",
+        "publicName": "Quipu client"
+      },
+      "depends_on": [
+        "http://aegis.gastown.local/ontology/repo_quipu"
+      ]
+    },
+    {
+      "kind": "interface",
+      "source": "shuttle/seeds.py",
+      "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fseeds.py",
+      "summary": "Seed steps create and reconcile linked work through the configured sd executable; backend routing belongs to that client.",
+      "source_sha256": "b40c0c128697d92bcfcf326768fab2c9e545b8a291618f2362d068e2c9bbc7f6",
+      "properties": {
+        "interfaceKind": "library",
+        "publicName": "Seed-step reconciliation"
+      },
+      "depends_on": [
+        "http://aegis.gastown.local/ontology/repo_seeds"
+      ]
+    },
+    {
+      "kind": "decision",
+      "source": "docs/design/shuttle.md",
+      "subject": "http://aegis.gastown.local/ontology/doc/shuttle/docs%2Fdesign%2Fshuttle.md",
+      "summary": "The v1 design deliberately exposes a CLI and library rather than a daemon, HTTP or MCP server. Consumers read the governed graph instead.",
+      "source_sha256": "959dd5719f22d0997e7438520eccacc3907fa260fa904f14903d2954a85ad166",
+      "type": "DecisionRecord",
+      "properties": {
+        "status": "active",
+        "supersessionStatus": "not-recorded-in-source"
+      }
+    },
+    {
+      "kind": "start-here",
+      "source": "README.md",
+      "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
+      "summary": "Begin with the workflow quick start and role in the stack; registration and production writes remain explicit operator actions.",
+      "source_sha256": "964ce6b302291a32c23a9feee377dabfd778d3b7e4d79cfe2e06f368f02843de",
+      "properties": {
+        "startHereOrder": 1,
+        "glossaryTerm": "https://scbrown.github.io/quechua/ns#Decision"
+      }
+    },
+    {
+      "kind": "start-here",
+      "source": "docs/operating.md",
+      "subject": "http://aegis.gastown.local/ontology/doc/shuttle/docs%2Foperating.md",
+      "summary": "Read the operational command and environment contract before exporting or freezing workflow history.",
+      "source_sha256": "d5634302171e1787507a4e065b46126fd4e3daa328954209981719817382bc64",
+      "properties": {
+        "startHereOrder": 2
+      }
+    },
+    {
+      "kind": "start-here",
+      "source": "docs/seed-steps.md",
+      "subject": "http://aegis.gastown.local/ontology/doc/shuttle/docs%2Fseed-steps.md",
+      "summary": "Read seed-step visit, replay and outcome semantics before connecting work-item completion to workflow transitions.",
+      "source_sha256": "af2b562361814de135058f64047c0a36d0e8b40ec490d2bc26fd1b6374071ed9",
+      "properties": {
+        "startHereOrder": 3
+      }
+    }
+  ]
+}
