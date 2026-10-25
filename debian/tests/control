@@ -1,0 +1,2 @@
+Tests: installed-cli
+Depends: @, python3

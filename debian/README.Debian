@@ -1,0 +1,22 @@
+This is an UNRELEASED source-package pilot, not an archive submission.
+The source is built with distro setuptools through pybuild, without pip,
+GitHub binaries, network resolution or feature removal.
+
+/usr/bin/shuttle and /usr/lib/python3/dist-packages/shuttle belong to dpkg.
+The package installs no service, timer, cron job, /etc conffile, signing key,
+credential, user or system state directory. It never calls a live Quipu service
+at install, upgrade, remove or purge. Explicit CLI use may create user state at
+~/.local/state/shuttle (SHUTTLE_STATE_DIR) and keys at ~/.config/shuttle/keys
+(SHUTTLE_KEY_DIR). Both remove and purge leave these user-owned files alone.
+Back up and delete them explicitly only when their owner intends to do so.
+An upgrade preserves them and runs no migration. Rollback must retain compatible
+state; backward compatibility is not implied by a successful dpkg downgrade.
+
+No self-updater is supplied by shuttle. Use APT for files owned by this package.
+Quipu and external tracker adapters are separately configured integrations,
+not implicitly downloaded packages or package-maintainer-script actions.
+
+NOT YET VERIFIED: clean distro build, full installed file inventory, lintian,
+autopkgtest, install/upgrade/remove/purge, reproducibility, amd64 and arm64
+execution. Maintainer appointment/copyright attribution require owner confirmation
+before any external submission. No external submission is authorized here.
