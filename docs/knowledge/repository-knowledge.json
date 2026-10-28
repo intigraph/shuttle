@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Shuttle records signed agent workflow transitions in append-only records and exports their evidence to Quipu.",
-      "source_sha256": "964ce6b302291a32c23a9feee377dabfd778d3b7e4d79cfe2e06f368f02843de",
+      "source_sha256": "4a40c4bd0d50b1ec6756c0db57771d98f2e1b5c207e3f4d9e6c0939f07273d3d",
       "type": "Concept"
     },
     {
@@ -16,7 +16,7 @@
       "source": "shuttle/cli.py",
       "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fcli.py",
       "summary": "The CLI defines and advances workflows, exports history, verifies signatures and freezes windows. It has no HTTP or MCP server.",
-      "source_sha256": "c4255c23dc66050d2a8f8e928123db08ae9b7d1dddcb27018db464b8efbc6931",
+      "source_sha256": "0460cc7819309e7a87fcc4d4dfbca79f8307bb1a5fcad946e934f4f3fb3d1d4a",
       "properties": {
         "interfaceKind": "CLI",
         "publicName": "shuttle"
@@ -100,7 +100,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Begin with the workflow quick start and role in the stack; registration and production writes remain explicit operator actions.",
-      "source_sha256": "964ce6b302291a32c23a9feee377dabfd778d3b7e4d79cfe2e06f368f02843de",
+      "source_sha256": "4a40c4bd0d50b1ec6756c0db57771d98f2e1b5c207e3f4d9e6c0939f07273d3d",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Decision"
