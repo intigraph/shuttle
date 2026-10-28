@@ -66,3 +66,7 @@ when.
 <!-- stack-table:end -->
 
 [License](LICENSE).
+
+## Agent orientation
+
+Run `shuttle prime` for the embedded [agent primer](docs/agent-primer.md) and a bounded, read-only local summary. Use `--static`, `--brief`, `--section` or `--json` for focused output. The generated [Shuttle skill](skills/shuttle/SKILL.md) carries the same primer. Signing status is file metadata, without loading private keys or checking registration.

@@ -1,0 +1,4 @@
+include shuttle/primer.md
+include docs/agent-primer.md
+include skills/shuttle/SKILL.md
+include scripts/sync-primer.py
