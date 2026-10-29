@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Shuttle records signed agent workflow transitions in append-only records and exports their evidence to Quipu.",
-      "source_sha256": "af7753fd4d0f760a613bd963f9c7e02347a150e66ad6e6866e7ad2ce3e3b816d",
+      "source_sha256": "99888ca498438262a1e1298a05382b74e76eb804bbdda68360c5476711ef579f",
       "type": "Concept"
     },
     {
@@ -100,7 +100,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Begin with the workflow quick start and role in the stack; registration and production writes remain explicit operator actions.",
-      "source_sha256": "af7753fd4d0f760a613bd963f9c7e02347a150e66ad6e6866e7ad2ce3e3b816d",
+      "source_sha256": "99888ca498438262a1e1298a05382b74e76eb804bbdda68360c5476711ef579f",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Decision"

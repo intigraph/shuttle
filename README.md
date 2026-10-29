@@ -45,6 +45,8 @@ shuttle version
 [Create a workflow](docs/installation-reference.md#quick-start) when you are ready
 to register an agent identity. Installation does not enroll a key or run a workflow.
 
+![Conceptual mechanism: Each legal transition leaves signed evidence](docs/demos/mechanism.svg)
+
 ## On your own data
 
 | You want to | Run |
