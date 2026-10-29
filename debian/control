@@ -1,0 +1,17 @@
+Source: shuttle
+Section: utils
+Priority: optional
+Maintainer: Unassigned packaging maintainer <unassigned@example.invalid>
+Build-Depends: debhelper-compat (= 13), dh-python, pybuild-plugin-pyproject,
+ python3-all (>= 3.11), python3-setuptools (>= 68), python3-cryptography (>= 41)
+Standards-Version: 4.7.4
+Rules-Requires-Root: no
+Homepage: https://github.com/intigraph/shuttle
+
+Package: shuttle
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}, python3-cryptography (>= 41)
+Description: signed append-only workflow runs for knowledge graphs
+ Records local workflow runs and signed transitions, with explicit export to
+ a separately configured Quipu service. Installing the package does not start
+ a service, create signing keys, configure credentials or export records.

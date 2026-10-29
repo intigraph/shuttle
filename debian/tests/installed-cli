@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+fixture_home="$(mktemp -d)"
+trap 'rm -rf "$fixture_home"' EXIT
+export HOME="$fixture_home"
+export SHUTTLE_STATE_DIR="$fixture_home/state"
+export SHUTTLE_KEY_DIR="$fixture_home/keys"
+unset QUIPU_SERVER QUIPU_AUTH_TOKEN QUIPU_AUTH_TOKEN_FILE
+cd "$fixture_home"
+/usr/bin/shuttle --version
+/usr/bin/shuttle --help >/dev/null
+/usr/bin/python3 - <<'CHECK'
+from pathlib import Path
+import shuttle
+from shuttle.signing import sign_transition, verify_transition, public_key_hex
+assert str(Path(shuttle.__file__).resolve()).startswith('/usr/lib/python3/dist-packages/')
+root = Path.home() / 'synthetic-keys'
+args = ('urn:test:run', 'claim', 'open', 'claimed', '2026-01-01T00:00:00Z', 'fixture')
+signature = sign_transition('fixture', *args[:-1], root=root)
+assert verify_transition(public_key_hex('fixture', root), signature, *args)
+assert not verify_transition(public_key_hex('fixture', root), signature, *args[:-2], '2026-01-02T00:00:00Z', args[-1])
+CHECK
