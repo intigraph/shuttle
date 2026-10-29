@@ -1,0 +1,100 @@
+{
+  "theme": "stack-terminal-24",
+  "versions": {
+    "shuttle": "shuttle 0.6.1"
+  },
+  "binary_sha256": {
+    "shuttle": "9e4ad52d1eb7330e58c0f734b277230f6f407d6688de7b787b1c940c943d0850"
+  },
+  "version_args": {
+    "shuttle": [
+      "version"
+    ]
+  },
+  "inputs_sha256": {
+    "render.py": "bebbe000565314f18a58731f2a1a4690577db127b3673fa10a45ce74eef0f23c",
+    "tape": "8d70768f408565da3dd810e3db08929bc0ce1a562f727d1da8019f57b0c96a4b",
+    "workflow.json": "3f161f90a307c6fc96f222c59ffd00d8458bc5f2b2b7c5c9cf8539715085257b"
+  },
+  "duration_seconds": 24.0,
+  "timeline": "deliberate reading holds; execution times recorded separately",
+  "frames_checked": 5,
+  "commands": [
+    {
+      "tool": "shuttle",
+      "args": [
+        "define",
+        "workflow.json"
+      ],
+      "exit": 0,
+      "seconds": 0.057306,
+      "stdout": "defined workflow 'review' (record 0)\n",
+      "stderr": ""
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "start",
+        "review",
+        "demo-run",
+        "--agent",
+        "demo-agent",
+        "--at",
+        "2026-01-01T00:00:00Z"
+      ],
+      "exit": 0,
+      "seconds": 0.089744,
+      "stdout": "started run 'demo-run' of 'review' in state 'open' (window 2026-01)\n",
+      "stderr": ""
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "advance",
+        "demo-run",
+        "--step",
+        "review",
+        "--agent",
+        "demo-agent",
+        "--at",
+        "2026-01-01T00:01:00Z"
+      ],
+      "exit": 0,
+      "seconds": 0.102422,
+      "stdout": "run 'demo-run': open -[review]-> reviewed\n",
+      "stderr": ""
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "advance",
+        "demo-run",
+        "--step",
+        "publish",
+        "--agent",
+        "demo-agent",
+        "--at",
+        "2026-01-01T00:02:00Z"
+      ],
+      "exit": 0,
+      "seconds": 0.0726,
+      "stdout": "run 'demo-run': reviewed -[publish]-> done (terminal)\n",
+      "stderr": ""
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "status"
+      ],
+      "exit": 0,
+      "seconds": 0.087679,
+      "stdout": "demo-run\treview\tdone\tterminal\n",
+      "stderr": ""
+    }
+  ],
+  "sha256": {
+    "demo.svg": "57317b4d9cf8b5ecdcf59734c9d2504d1c5fe04b92ceaae386c3173081453501",
+    "transcript.txt": "d5c257ff2d562b7df2c937a8f8f6c03731d4c45367121b9c32d1b02cf08b815c",
+    "demo.cast": "e03c96dc3f1f67a005fe91d1cdaf3b89cd0c9f3b6ac984ba340643106ca65e8e"
+  }
+}

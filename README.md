@@ -24,6 +24,12 @@ Pinned releases, alternatives, configuration and removal are in the
 
 ## Try it
 
+![Animated terminal: Define a local workflow, advance through signed steps, and inspect its terminal state](docs/demos/terminal/demo.svg)
+
+The public fixture uses private local state and demo keys; nothing is registered or exported.
+[Read the transcript](docs/demos/terminal/transcript.txt) or
+[reproduce the recording](docs/demos/terminal.md).
+
 Check the installed workflow engine:
 
 ```sh

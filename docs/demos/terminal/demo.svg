@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-labelledby="title desc">
+<title id="title">Shuttle: move a run through signed steps</title>
+<desc id="desc">Native CLI, public two-step fixture and new local keys/state only; no export, key registration, graph or work-item reconciliation. The animation repeats. The adjacent transcript provides a static alternative.</desc>
+<rect width="100%" height="100%" rx="16" fill="#101827"/>
+<path d="M0 54H1000" stroke="#334155"/>
+<circle cx="28" cy="27" r="7" fill="#fb7185"/>
+<circle cx="52" cy="27" r="7" fill="#fbbf24"/>
+<circle cx="76" cy="27" r="7" fill="#34d399"/>
+<text x="110" y="34" fill="#e2e8f0" font-family="monospace" font-size="20">Shuttle: move a run through signed steps</text>
+<g id="frame0" visibility="hidden" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="visible;hidden;hidden" keyTimes="0.000000;0.125000;1.000000" dur="24.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ shuttle define workflow.json</text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve">defined workflow &#x27;review&#x27; (record 0)</text>
+</g>
+<g id="frame1" visibility="hidden" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="hidden;visible;hidden;hidden" keyTimes="0.000000;0.125000;0.291667;1.000000" dur="24.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ shuttle start review demo-run --agent demo-agent --at </text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve">2026-01-01T00:00:00Z</text>
+<text x="28" y="158" fill="#f1f5f9" xml:space="preserve">started run &#x27;demo-run&#x27; of &#x27;review&#x27; in state &#x27;open&#x27; (window </text>
+<text x="28" y="190" fill="#f1f5f9" xml:space="preserve">2026-01)</text>
+</g>
+<g id="frame2" visibility="hidden" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="hidden;visible;hidden;hidden" keyTimes="0.000000;0.291667;0.500000;1.000000" dur="24.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ shuttle advance demo-run --step review --agent demo-agent --at </text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve">2026-01-01T00:01:00Z</text>
+<text x="28" y="158" fill="#f1f5f9" xml:space="preserve">run &#x27;demo-run&#x27;: open -[review]-&gt; reviewed</text>
+</g>
+<g id="frame3" visibility="hidden" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="hidden;visible;hidden;hidden" keyTimes="0.000000;0.500000;0.708333;1.000000" dur="24.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ shuttle advance demo-run --step publish --agent demo-agent --at</text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve"> 2026-01-01T00:02:00Z</text>
+<text x="28" y="158" fill="#f1f5f9" xml:space="preserve">run &#x27;demo-run&#x27;: reviewed -[publish]-&gt; done (terminal)</text>
+</g>
+<g id="frame4" visibility="visible" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="hidden;visible;visible" keyTimes="0.000000;0.708333;1.000000" dur="24.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ shuttle status</text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve">demo-run        review  done    terminal</text>
+</g>
+</svg>
