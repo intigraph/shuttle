@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/thread-workshop/shuttle.png" width="704" alt="shuttle: A wooden shuttle crosses ordered warp threads. Original pixel art in the Thread Workshop style."/></p>
+
 <p align="center">
   <img src="assets/logo.svg" width="220" alt="Shuttle logo — a weaving shuttle carrying a red weft thread through vertical warp threads, with a small knot seal below"/>
 </p>
