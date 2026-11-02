@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 export PYBUILD_NAME=shuttle
 export PYBUILD_SYSTEM=pyproject
-export PYBUILD_TEST_ARGS=discover -s tests -q
+export PYBUILD_TEST_ARGS=-s tests -q
 export PYBUILD_TEST_UNITTEST=1
 
 %:

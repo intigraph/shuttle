@@ -1,4 +1,4 @@
-tests/
-scripts/
+tests
+scripts
 CHANGELOG.md
 pyproject.toml
