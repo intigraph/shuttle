@@ -68,9 +68,19 @@ jobs:
       - name: Build the binary package in a clean chroot with no network
         run: |
           mkdir -p out
+          status=0
           sbuild --chroot-mode=unshare --dist=trixie --arch=amd64 \
             --no-run-lintian --no-run-autopkgtest --no-apt-upgrade \
-            --build-dir="$PWD/out" ./shuttle_*.dsc
+            --build-dir="$PWD/out" ./shuttle_*.dsc || status=$?
+          # sbuild names its log with a timestamp containing ':', which artifacts
+          # refuse; keep one plain copy, and show its tail when the build fails.
+          log=$(ls -t out/*.build 2>/dev/null | head -1 || true)
+          if [ -n "$log" ]; then cp -L "$log" out/build.log; rm -f out/*.build; fi
+          if [ "$status" -ne 0 ]; then
+            echo "::error::sbuild failed with exit $status; last 200 lines of the build log:"
+            tail -n 200 out/build.log 2>/dev/null || true
+            exit "$status"
+          fi
           cp shuttle_*.dsc shuttle_*.orig.tar.* shuttle_*.debian.tar.* out/
           ls -l out
           sha256sum out/*.deb | tee out/SHA256SUMS
@@ -131,7 +141,7 @@ jobs:
             out/*.debian.tar.*
             out/*.changes
             out/*.buildinfo
-            out/*.build
+            out/build.log
             out/SHA256SUMS
             out/lintian.txt
             out/autopkgtest/
