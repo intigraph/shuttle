@@ -124,9 +124,13 @@ jobs:
             # apt cannot --reinstall a local file absent from an index; dpkg can.
             dpkg -i "$deb" >/dev/null
             dpkg -s shuttle | grep -q "Status: install ok installed"
+            # remove: shuttle ships no conffiles, so nothing may stay behind.
             apt-get remove -y -qq shuttle >/dev/null
             dpkg -s shuttle 2>/dev/null | grep -q "Status: deinstall ok config-files" \
               || ! dpkg -s shuttle >/dev/null 2>&1
+            # purge from an installed state (after a full remove, apt has no
+            # record and no index to locate the package, so install it again).
+            dpkg -i "$deb" >/dev/null
             apt-get purge -y -qq shuttle >/dev/null
             ! dpkg -s shuttle >/dev/null 2>&1
             test -z "$(dpkg -L shuttle 2>/dev/null || true)"
