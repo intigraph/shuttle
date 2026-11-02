@@ -95,8 +95,10 @@ jobs:
               shuttle_*_amd64.changes | tee lintian.txt || true
             echo "--- lintian tag counts"
             grep -oE "^[EWIPX]: " lintian.txt | sort | uniq -c || true
-            # Errors fail the run. Warnings and below are dispositioned on the work item.
-            ! grep -q "^E: " lintian.txt
+            # Errors fail the run, except unreleased-changes: the changelog is
+            # deliberately UNRELEASED because this pilot is never uploaded.
+            # Warnings and below are dispositioned on the work item.
+            ! grep "^E: " lintian.txt | grep -v " unreleased-changes$"
           '
 
       - name: autopkgtest (debian/tests) on a fresh Debian 13
