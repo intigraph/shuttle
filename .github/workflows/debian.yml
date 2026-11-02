@@ -111,7 +111,7 @@ jobs:
 
       - name: Install, upgrade, remove and purge smoke on a fresh Debian 13
         run: |
-          docker run --rm -v "$PWD/out:/out" debian:trixie bash -euo pipefail -c '
+          docker run --rm -e DEBIAN_FRONTEND=noninteractive -v "$PWD/out:/out" debian:trixie bash -euo pipefail -c '
             apt-get update -qq
             deb=$(ls /out/shuttle_*_all.deb)
             apt-get install -y -qq "$deb" >/dev/null
@@ -120,8 +120,10 @@ jobs:
             # The package must not start services, create keys or write credentials.
             test -z "$(ls /etc/systemd/system 2>/dev/null | grep -i shuttle || true)"
             test ! -e /root/.config/shuttle
-            # Reinstall the same version: idempotent upgrade path.
-            apt-get install -y -qq --reinstall "$deb" >/dev/null
+            # Reinstall the same version over itself: the idempotent upgrade path.
+            # apt cannot --reinstall a local file absent from an index; dpkg can.
+            dpkg -i "$deb" >/dev/null
+            dpkg -s shuttle | grep -q "Status: install ok installed"
             apt-get remove -y -qq shuttle >/dev/null
             dpkg -s shuttle 2>/dev/null | grep -q "Status: deinstall ok config-files" \
               || ! dpkg -s shuttle >/dev/null 2>&1
