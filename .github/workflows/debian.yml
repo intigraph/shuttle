@@ -106,7 +106,7 @@ jobs:
           docker run --rm -v "$PWD/out:/out" -v "$PWD/src:/src:ro" debian:trixie bash -euo pipefail -c '
             apt-get update -qq
             apt-get install -y -qq --no-install-recommends autopkgtest >/dev/null
-            autopkgtest --output-dir=/out/autopkgtest /out/shuttle_*_amd64.changes -- null
+            autopkgtest --output-dir=/out/autopkgtest /out/shuttle_*.dsc /out/shuttle_*_all.deb -- null
           '
 
       - name: Install, upgrade, remove and purge smoke on a fresh Debian 13
