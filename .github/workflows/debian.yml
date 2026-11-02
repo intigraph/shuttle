@@ -1,0 +1,156 @@
+name: Debian package
+
+# Debian source-package pilot. A disposable GitHub-hosted runner is the clean
+# builder: no crew host and no package installed outside this VM.
+# - The binary is built by sbuild in an unshare chroot of Debian 13 (trixie),
+#   from the PR's own debian/ and an orig tarball made from this checkout.
+#   sbuild's unshare mode has no network during the build, so only declared
+#   distro build-deps are used and no prebuilt release binary can enter it.
+# - lintian, autopkgtest (debian/tests) and an install/upgrade/remove/purge
+#   smoke run in a fresh debian:trixie container against the built .deb.
+# - Nothing is signed, uploaded or published. Artifacts stay on the run.
+# arm64 is not covered here; it is an explicit gap.
+
+on:
+  pull_request:
+    paths:
+      - "debian/**"
+      - ".github/workflows/debian.yml"
+      - "pyproject.toml"
+      - "shuttle/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: debian-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sbuild-trixie-amd64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          path: src
+
+      - name: Install the builder tools on the runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            sbuild mmdebstrap uidmap debian-archive-keyring dpkg-dev
+          # Ubuntu 24.04 blocks unprivileged user namespaces by default; sbuild's
+          # unshare mode needs them. This changes only this disposable VM.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Create the Debian 13 build chroot (unshare mode)
+        run: |
+          mkdir -p ~/.cache/sbuild
+          mmdebstrap --mode=unshare --variant=buildd --arch=amd64 \
+            --keyring=/usr/share/keyrings/debian-archive-keyring.gpg \
+            trixie ~/.cache/sbuild/trixie-amd64.tar http://deb.debian.org/debian
+          ls -l ~/.cache/sbuild
+
+      - name: Build the source package from this checkout
+        working-directory: src
+        run: |
+          version=$(dpkg-parsechangelog -S Version)
+          upstream=${version%-*}
+          git archive --format=tar --prefix="shuttle-${upstream}/" HEAD -- . ':(exclude)debian' \
+            | gzip -n > "../shuttle_${upstream}.orig.tar.gz"
+          dpkg-source -b .
+          ls -l ..
+
+      - name: Build the binary package in a clean chroot with no network
+        run: |
+          mkdir -p out
+          status=0
+          sbuild --chroot-mode=unshare --dist=trixie --arch=amd64 \
+            --no-run-lintian --no-run-autopkgtest --no-apt-upgrade \
+            --build-dir="$PWD/out" ./shuttle_*.dsc || status=$?
+          # sbuild names its log with a timestamp containing ':', which artifacts
+          # refuse; keep one plain copy, and show its tail when the build fails.
+          log=$(ls -t out/*.build 2>/dev/null | head -1 || true)
+          if [ -n "$log" ]; then cp -L "$log" out/build.log; rm -f out/*.build; fi
+          if [ "$status" -ne 0 ]; then
+            echo "::error::sbuild failed with exit $status; last 200 lines of the build log:"
+            tail -n 200 out/build.log 2>/dev/null || true
+            exit "$status"
+          fi
+          cp shuttle_*.dsc shuttle_*.orig.tar.* shuttle_*.debian.tar.* out/
+          ls -l out
+          sha256sum out/*.deb | tee out/SHA256SUMS
+
+      - name: Lintian (Debian 13 policy)
+        run: |
+          docker run --rm -v "$PWD/out:/out" debian:trixie bash -euo pipefail -c '
+            apt-get update -qq
+            apt-get install -y -qq --no-install-recommends lintian >/dev/null
+            cd /out
+            lintian --info --display-info --pedantic --tag-display-limit=0 \
+              shuttle_*_amd64.changes | tee lintian.txt || true
+            echo "--- lintian tag counts"
+            grep -oE "^[EWIPX]: " lintian.txt | sort | uniq -c || true
+            # Errors fail the run, except unreleased-changes: the changelog is
+            # deliberately UNRELEASED because this pilot is never uploaded.
+            # Warnings and below are dispositioned on the work item.
+            ! grep "^E: " lintian.txt | grep -v " unreleased-changes$"
+          '
+
+      - name: autopkgtest (debian/tests) on a fresh Debian 13
+        run: |
+          docker run --rm -v "$PWD/out:/out" -v "$PWD/src:/src:ro" debian:trixie bash -euo pipefail -c '
+            apt-get update -qq
+            apt-get install -y -qq --no-install-recommends autopkgtest >/dev/null
+            autopkgtest --output-dir=/out/autopkgtest /out/shuttle_*.dsc /out/shuttle_*_all.deb -- null
+          '
+
+      - name: Install, upgrade, remove and purge smoke on a fresh Debian 13
+        run: |
+          docker run --rm -e DEBIAN_FRONTEND=noninteractive -v "$PWD/out:/out" debian:trixie bash -euo pipefail -c '
+            apt-get update -qq
+            deb=$(ls /out/shuttle_*_all.deb)
+            apt-get install -y -qq "$deb" >/dev/null
+            dpkg -s shuttle | grep -E "^(Status|Version|Depends):"
+            shuttle --help >/dev/null
+            # The package must not start services, create keys or write credentials.
+            test -z "$(ls /etc/systemd/system 2>/dev/null | grep -i shuttle || true)"
+            test ! -e /root/.config/shuttle
+            # Reinstall the same version over itself: the idempotent upgrade path.
+            # apt cannot --reinstall a local file absent from an index; dpkg can.
+            dpkg -i "$deb" >/dev/null
+            dpkg -s shuttle | grep -q "Status: install ok installed"
+            # remove: shuttle ships no conffiles, so nothing may stay behind.
+            apt-get remove -y -qq shuttle >/dev/null
+            dpkg -s shuttle 2>/dev/null | grep -q "Status: deinstall ok config-files" \
+              || ! dpkg -s shuttle >/dev/null 2>&1
+            # purge from an installed state (after a full remove, apt has no
+            # record and no index to locate the package, so install it again).
+            dpkg -i "$deb" >/dev/null
+            apt-get purge -y -qq shuttle >/dev/null
+            ! dpkg -s shuttle >/dev/null 2>&1
+            test -z "$(dpkg -L shuttle 2>/dev/null || true)"
+            echo "lifecycle smoke: install, reinstall, remove and purge OK"
+          '
+
+      - name: Keep the build log and packages
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: debian-trixie-amd64
+          path: |
+            out/*.deb
+            out/*.dsc
+            out/*.orig.tar.*
+            out/*.debian.tar.*
+            out/*.changes
+            out/*.buildinfo
+            out/build.log
+            out/SHA256SUMS
+            out/lintian.txt
+            out/autopkgtest/
+          if-no-files-found: warn
