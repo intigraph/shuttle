@@ -1,0 +1,15 @@
+$ shuttle define workflow.json
+defined workflow 'review' (record 0)
+[exit 0]
+$ shuttle start review demo-run --agent demo-agent --at 2026-01-01T00:00:00Z
+started run 'demo-run' of 'review' in state 'open' (window 2026-01)
+[exit 0]
+$ shuttle advance demo-run --step review --agent demo-agent --at 2026-01-01T00:01:00Z
+run 'demo-run': open -[review]-> reviewed
+[exit 0]
+$ shuttle advance demo-run --step publish --agent demo-agent --at 2026-01-01T00:02:00Z
+run 'demo-run': reviewed -[publish]-> done (terminal)
+[exit 0]
+$ shuttle status
+demo-run	review	done	terminal
+[exit 0]

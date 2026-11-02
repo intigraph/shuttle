@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/thread-workshop/shuttle.png" width="704" alt="shuttle: A wooden shuttle crosses ordered warp threads. Original pixel art in the Thread Workshop style."/></p>
+
 <p align="center">
   <img src="assets/logo.svg" width="220" alt="Shuttle logo — a weaving shuttle carrying a red weft thread through vertical warp threads, with a small knot seal below"/>
 </p>
@@ -6,6 +8,12 @@
 
 Signed agent workflows with append-only execution records. Steps link back
 to work items and export their evidence to Quipu.
+
+## Why you would want it
+
+- **Keep workflow evidence:** append a signed record for each transition.
+- **Check legal steps:** advance runs according to their declared state machine.
+- **Share completed history:** export evidence to governed Quipu graphs.
 
 ## Install
 
@@ -20,7 +28,13 @@ Set `STACK_INSTALL_ROOT` on the receiving shell for another prefix.
 Pinned releases, alternatives, configuration and removal are in the
 [installation and usage reference](docs/installation-reference.md).
 
-## Try it
+## First success in three commands
+
+![Animated terminal: Define a local workflow, advance through signed steps, and inspect its terminal state](docs/demos/terminal/demo.svg)
+
+The public fixture uses private local state and demo keys; nothing is registered or exported.
+[Read the transcript](docs/demos/terminal/transcript.txt) or
+[reproduce the recording](docs/demos/terminal.md).
 
 Check the installed workflow engine:
 
@@ -31,7 +45,43 @@ shuttle version
 [Create a workflow](docs/installation-reference.md#quick-start) when you are ready
 to register an agent identity. Installation does not enroll a key or run a workflow.
 
-## Next steps
+![Conceptual mechanism: Each legal transition leaves signed evidence](docs/demos/mechanism.svg)
+
+## On your own data
+
+| You want to | Run |
+|---|---|
+| Define a workflow | `shuttle define examples/triage.json` |
+| Inspect local run state | `shuttle status` |
+| Inspect available operations | `shuttle --help` |
+
+The [quick-start reference](docs/installation-reference.md#quick-start)
+covers identity setup, starting runs, signed advances and export. The embedded
+recording uses isolated local keys and state; it registers and exports nothing.
+
+## Wire it into your agent
+
+Configure each agent's signing identity before allowing it to advance runs.
+`shuttle keys init` prepares a key and registration material; a human registers
+the public key. Shuttle does not enroll itself. See the
+[identity and workflow reference](docs/installation-reference.md#quick-start).
+Seeds can perform configured workflow steps; reconciliation is a separate
+operation that must be explicitly configured.
+
+## Before you start
+
+The installer needs Python 3.11+ with venv/pip, curl and Linux or macOS.
+The engine uses the `cryptography` package for signatures. Keep signing keys
+private and retain the append-only local state. Quipu export and signature
+verification from the graph need a configured server and registered public keys.
+
+## What's next
+
+- [The Shuttle book](https://intigraph.github.io/shuttle/): concepts and usage.
+- [Installation reference](docs/installation-reference.md): configuration and removal.
+- [Reproduce the terminal demo](docs/demos/terminal.md): local fixture and full output.
+
+### Related tools and repository knowledge
 
 - [Tambo](https://github.com/intigraph/tambo): guided stack installation and verification.
 - [Camayoc](https://github.com/scbrown/camayoc): governed memory and vocabulary.
@@ -39,7 +89,7 @@ to register an agent identity. Installation does not enroll a key or run a workf
 
 **Load this repository’s graph:** public repository-pendant assets have not yet been verified. When a release supplies the archive, checksum and provenance, follow the [verified import workflow](https://scbrown.github.io/quipu/sharing/index.html): extract the share directory and use `quipu import SHARE_DIR --db repository.db`. Import stages knowledge; ROOT stays unchanged.
 
-## The stack
+## 🧺 The stack
 
 <!-- stack-table:start -->
 
@@ -64,5 +114,12 @@ when.
 | [shuttle](https://github.com/scbrown/shuttle) | runs signed agent workflows and keeps their records in Quipu |
 
 <!-- stack-table:end -->
+
+
+## Contributing
+
+Run `just check` and `just test` before submitting a change.
+
+## 📜 License
 
 [License](LICENSE).

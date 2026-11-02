@@ -1,0 +1,19 @@
+{
+  "name": "review",
+  "initial": "open",
+  "terminal": [
+    "done"
+  ],
+  "transitions": [
+    {
+      "step": "review",
+      "from": "open",
+      "to": "reviewed"
+    },
+    {
+      "step": "publish",
+      "from": "reviewed",
+      "to": "done"
+    }
+  ]
+}

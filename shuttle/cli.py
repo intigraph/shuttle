@@ -28,12 +28,12 @@ class CliError(RuntimeError):
     pass
 
 
-def _index(root=None) -> tuple[dict[str, model.Definition], dict[str, dict]]:
+def _index(root=None, *, records=None) -> tuple[dict[str, model.Definition], dict[str, dict]]:
     """Fold the log: definitions by name, runs by id (definition, start
     month, events). The fold IS the read model; corruption is loud."""
     defs: dict[str, model.Definition] = {}
     runs: dict[str, dict] = {}
-    for rec in state.records(root):
+    for rec in state.records(root) if records is None else records:
         t = rec.get("type")
         if t == "define":
             defs[rec["name"]] = model.parse_definition(rec)
@@ -358,7 +358,12 @@ def cmd_scheduled(args) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="shuttle", description=__doc__)
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "prime":
+        from .prime import main as prime_main
+        return prime_main(argv[1:])
+    ap = argparse.ArgumentParser(prog="shuttle", description=__doc__,
+        epilog="Run shuttle prime for agent orientation and local read-only state.")
     ap.add_argument(
         "-V", "--version", action="version", version=f"shuttle {__version__}"
     )

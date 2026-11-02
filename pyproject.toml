@@ -22,3 +22,6 @@ packages = ["shuttle"]
 
 [tool.setuptools.dynamic]
 version = {attr = "shuttle.__version__"}
+
+[tool.setuptools.package-data]
+shuttle = ["primer.md"]

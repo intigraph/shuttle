@@ -1,0 +1,6 @@
+{"version": 2, "width": 65, "height": 14, "title": "Shuttle: move a run through signed steps", "env": {"TERM": "dumb"}}
+[0.0, "o", "\u001b[2J\u001b[H$ shuttle define workflow.json\r\ndefined workflow 'review' (record 0)\r\n"]
+[3.0, "o", "\u001b[2J\u001b[H$ shuttle start review demo-run --agent demo-agent --at \r\n2026-01-01T00:00:00Z\r\nstarted run 'demo-run' of 'review' in state 'open' (window \r\n2026-01)\r\n"]
+[7.0, "o", "\u001b[2J\u001b[H$ shuttle advance demo-run --step review --agent demo-agent --at \r\n2026-01-01T00:01:00Z\r\nrun 'demo-run': open -[review]-> reviewed\r\n"]
+[12.0, "o", "\u001b[2J\u001b[H$ shuttle advance demo-run --step publish --agent demo-agent --at\r\n 2026-01-01T00:02:00Z\r\nrun 'demo-run': reviewed -[publish]-> done (terminal)\r\n"]
+[17.0, "o", "\u001b[2J\u001b[H$ shuttle status\r\ndemo-run        review  done    terminal\r\n"]

@@ -1,0 +1,90 @@
+{
+  "title": "Shuttle: move a run through signed steps",
+  "description": "Native CLI, public two-step fixture and new local keys/state only; no export, key registration, graph or work-item reconciliation.",
+  "width": 1000,
+  "height": 620,
+  "font_size": 24,
+  "line_height": 32,
+  "inputs": [
+    "workflow.json"
+  ],
+  "version_args": {
+    "shuttle": [
+      "version"
+    ]
+  },
+  "steps": [
+    {
+      "tool": "shuttle",
+      "args": [
+        "define",
+        "workflow.json"
+      ],
+      "hold": 3,
+      "requires": [
+        "defined workflow 'review'"
+      ]
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "start",
+        "review",
+        "demo-run",
+        "--agent",
+        "demo-agent",
+        "--at",
+        "2026-01-01T00:00:00Z"
+      ],
+      "hold": 4,
+      "requires": [
+        "started run 'demo-run'"
+      ]
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "advance",
+        "demo-run",
+        "--step",
+        "review",
+        "--agent",
+        "demo-agent",
+        "--at",
+        "2026-01-01T00:01:00Z"
+      ],
+      "hold": 5,
+      "requires": [
+        "reviewed"
+      ]
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "advance",
+        "demo-run",
+        "--step",
+        "publish",
+        "--agent",
+        "demo-agent",
+        "--at",
+        "2026-01-01T00:02:00Z"
+      ],
+      "hold": 5,
+      "requires": [
+        "done"
+      ]
+    },
+    {
+      "tool": "shuttle",
+      "args": [
+        "status"
+      ],
+      "hold": 7,
+      "requires": [
+        "demo-run",
+        "done"
+      ]
+    }
+  ]
+}
