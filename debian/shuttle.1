@@ -1,0 +1,105 @@
+.TH SHUTTLE 1 "2026-11-03" "Shuttle" "User Commands"
+.SH NAME
+shuttle \- record and export signed append-only workflow runs
+.SH SYNOPSIS
+.B shuttle
+.RI [ --require-existing-keys ] " command " [ arguments ]
+.br
+.B shuttle
+.BR --help " | " --version
+.SH DESCRIPTION
+Shuttle records workflow definitions, runs and signed transitions in a local
+append-only log. Run state is folded from that log. Export sends records to a
+separately configured Quipu service; local state buffers records until export.
+Installing this package does not start a service, generate keys or configure
+credentials. Network operations require an explicitly configured service.
+.SH COMMANDS
+Use
+.B shuttle command --help
+for the options of each command.
+.TP
+.B prime
+Print agent orientation and local read-only state.
+.TP
+.B version
+Print the installed version.
+.TP
+.BI "keys init " agent " [--workflow workflow]"
+Create or show an agent key and print registration Turtle. Public-key
+registration is a separate operation; Shuttle does not register its own keys.
+.TP
+.BI "define " file " [--at timestamp]"
+Record a workflow definition from a JSON file.
+.TP
+.BI "start " definition " run --agent agent [--at timestamp]"
+Start a run of a recorded workflow definition.
+.TP
+.BI "advance " run " --step step --agent agent [--at timestamp]"
+Perform one signed workflow transition.
+.TP
+.BI "status " [run]
+Show state folded from the local log for one run or all runs.
+.TP
+.BI "reconcile " "[run] --agent agent"
+Create seeds for seed steps and advance runs whose seed has closed.
+.TP
+.B export [--strict]
+Drain the local log into Quipu windows. Strict mode stops at the first record
+that cannot be posted, leaving it and all later records unexported.
+.TP
+.BI "verify " run " [--identity-graph IRI]"
+Re-verify a run's signatures from the graph.
+.TP
+.BI "import-run " file " --agent agent"
+Import foreign transition JSONL as a signed run.
+.TP
+.BI "freeze-window " month " [--agent agent]"
+Freeze a completed window through Quipu.
+.TP
+.BI "scheduled " action " --config file"
+Run the strict scheduled-run process port. Actions are
+.BR admit , " started" , " finished" " and " publish .
+.SH OPTIONS
+.TP
+.B --require-existing-keys
+Refuse missing or unsafe local keys throughout the command; never generate keys.
+.TP
+.B -h, --help
+Show usage and exit.
+.TP
+.B -V, --version
+Show the installed version and exit.
+.SH ENVIRONMENT
+.TP
+.B SHUTTLE_STATE_DIR
+Override the default local state directory,
+.IR ~/.local/state/shuttle .
+.TP
+.B SHUTTLE_KEY_DIR
+Override the default signing key directory,
+.IR ~/.config/shuttle/keys .
+.TP
+.B QUIPU_SERVER
+Quipu service URL. The default is
+.IR http://localhost:3030 .
+.TP
+.B QUIPU_AUTH_TOKEN
+Bearer token for Quipu. Treat this value as a secret.
+.TP
+.B QUIPU_AUTH_TOKEN_FILE
+Path to a token file, used when QUIPU_AUTH_TOKEN is absent.
+.SH FILES
+.TP
+.I ~/.local/state/shuttle/runs.jsonl
+Append-only workflow log. Preserve records that have not yet been exported.
+.TP
+.I ~/.local/state/shuttle/export-watermark.json
+Tracks the portion of the log already exported.
+.TP
+.I ~/.config/shuttle/keys
+Agent signing keys. Preserve these keys; replacing one changes signing identity.
+.SH EXIT STATUS
+Zero indicates success. Invalid arguments and refused operations return a
+nonzero status with a diagnostic on standard error.
+.SH SEE ALSO
+.BR python3 (1)

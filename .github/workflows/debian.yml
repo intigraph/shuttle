@@ -85,9 +85,29 @@ jobs:
           ls -l out
           sha256sum out/*.deb | tee out/SHA256SUMS
 
+      - name: Rebuild the same source and compare binary packages
+        run: |
+          mkdir -p repeat
+          status=0
+          sbuild --chroot-mode=unshare --dist=trixie --arch=amd64 \
+            --no-run-lintian --no-run-autopkgtest --no-apt-upgrade \
+            --build-dir="$PWD/repeat" ./shuttle_*.dsc || status=$?
+          log=$(ls -t repeat/*.build 2>/dev/null | head -1 || true)
+          if [ -n "$log" ]; then cp -L "$log" repeat/build.log; rm -f repeat/*.build; fi
+          if [ "$status" -ne 0 ]; then
+            tail -n 200 repeat/build.log 2>/dev/null || true
+            exit "$status"
+          fi
+          # Different build directories and fresh source extraction; compare the
+          # installable artifact, not timestamps in the buildinfo/changes files.
+          for deb in out/*.deb; do
+            cmp "$deb" "repeat/$(basename "$deb")"
+          done
+          sha256sum out/*.deb repeat/*.deb | tee out/reproducibility.txt
+
       - name: Lintian (Debian 13 policy)
         run: |
-          docker run --rm -v "$PWD/out:/out" debian:trixie bash -euo pipefail -c '
+          docker run --rm -v "$PWD/out:/out" debian:trixie@sha256:2dc419c6d7fe3dad0a2f9fd469c34cc90b0f9ba642d8fde837fe3d7d34a0e7f1 bash -euo pipefail -c '
             apt-get update -qq
             apt-get install -y -qq --no-install-recommends lintian >/dev/null
             cd /out
@@ -103,7 +123,7 @@ jobs:
 
       - name: autopkgtest (debian/tests) on a fresh Debian 13
         run: |
-          docker run --rm -v "$PWD/out:/out" -v "$PWD/src:/src:ro" debian:trixie bash -euo pipefail -c '
+          docker run --rm -v "$PWD/out:/out" -v "$PWD/src:/src:ro" debian:trixie@sha256:2dc419c6d7fe3dad0a2f9fd469c34cc90b0f9ba642d8fde837fe3d7d34a0e7f1 bash -euo pipefail -c '
             apt-get update -qq
             apt-get install -y -qq --no-install-recommends autopkgtest >/dev/null
             autopkgtest --output-dir=/out/autopkgtest /out/shuttle_*.dsc /out/shuttle_*_all.deb -- null
@@ -111,7 +131,7 @@ jobs:
 
       - name: Install, upgrade, remove and purge smoke on a fresh Debian 13
         run: |
-          docker run --rm -e DEBIAN_FRONTEND=noninteractive -v "$PWD/out:/out" debian:trixie bash -euo pipefail -c '
+          docker run --rm -e DEBIAN_FRONTEND=noninteractive -v "$PWD/out:/out" debian:trixie@sha256:2dc419c6d7fe3dad0a2f9fd469c34cc90b0f9ba642d8fde837fe3d7d34a0e7f1 bash -euo pipefail -c '
             apt-get update -qq
             deb=$(ls /out/shuttle_*_all.deb)
             apt-get install -y -qq "$deb" >/dev/null
@@ -153,4 +173,7 @@ jobs:
             out/SHA256SUMS
             out/lintian.txt
             out/autopkgtest/
+            out/reproducibility.txt
+            repeat/*.deb
+            repeat/build.log
           if-no-files-found: warn
