@@ -16,7 +16,11 @@ No self-updater is supplied by shuttle. Use APT for files owned by this package.
 Quipu and external tracker adapters are separately configured integrations,
 not implicitly downloaded packages or package-maintainer-script actions.
 
-NOT YET VERIFIED: clean distro build, full installed file inventory, lintian,
-autopkgtest, install/upgrade/remove/purge, reproducibility, amd64 and arm64
-execution. Maintainer appointment/copyright attribution require owner confirmation
+The Debian package CI builds from source in an unshare trixie amd64 chroot,
+runs lintian and installed-cli autopkgtest, and checks install/reinstall/remove/
+purge in fresh containers. A second build compares binary package bytes. Build
+logs, packages, lintian findings and comparison hashes are retained as CI artifacts.
+This checks the supplied source and distro inputs; it is not archive admission,
+a cross-version upgrade test or independent arm64 execution qualification.
+The installed manual page is available as shuttle(1). Maintainer appointment/copyright attribution require owner confirmation
 before any external submission. No external submission is authorized here.

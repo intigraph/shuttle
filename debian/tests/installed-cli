@@ -7,6 +7,9 @@ export SHUTTLE_STATE_DIR="$fixture_home/state"
 export SHUTTLE_KEY_DIR="$fixture_home/keys"
 unset QUIPU_SERVER QUIPU_AUTH_TOKEN QUIPU_AUTH_TOKEN_FILE
 cd "$fixture_home"
+# dh_installman must install the page in the binary package, not just source.
+test -s /usr/share/man/man1/shuttle.1.gz
+gzip -t /usr/share/man/man1/shuttle.1.gz
 /usr/bin/shuttle --version
 /usr/bin/shuttle --help >/dev/null
 /usr/bin/python3 - <<'CHECK'
