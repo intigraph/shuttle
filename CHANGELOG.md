@@ -6,6 +6,18 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.7.0](https://github.com/intigraph/shuttle/compare/v0.6.1...v0.7.0) (2026-11-03)
+
+
+### Features
+
+* **cli:** shuttle prime per the stack prime contract (aegis-km3g.11) ([#22](https://github.com/intigraph/shuttle/issues/22)) ([0d44e49](https://github.com/intigraph/shuttle/commit/0d44e49dfcc1e676be88834fc62d3b608258f28e))
+
+
+### Bug Fixes
+
+* **share:** admit tracked agent-file aliases and export the policy catalogue ([#27](https://github.com/intigraph/shuttle/issues/27)) ([b769d21](https://github.com/intigraph/shuttle/commit/b769d21ea9c1a68b9dd8a8e6033ef9f79bcf8733))
+
 ## [0.6.1](https://github.com/scbrown/shuttle/compare/v0.6.0...v0.6.1) (2026-10-22)
 
 
