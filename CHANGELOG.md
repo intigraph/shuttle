@@ -6,6 +6,13 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.8.0](https://github.com/intigraph/shuttle/compare/v0.7.0...v0.8.0) (2026-11-04)
+
+
+### Features
+
+* **share:** publish pendant entities under w3id.org/intigraph names ([#29](https://github.com/intigraph/shuttle/issues/29)) ([5cf9dec](https://github.com/intigraph/shuttle/commit/5cf9decab06f7f0c81d81b1a97ec9f1960e450bd))
+
 ## [0.7.0](https://github.com/intigraph/shuttle/compare/v0.6.1...v0.7.0) (2026-11-03)
 
 
