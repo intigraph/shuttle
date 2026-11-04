@@ -1,0 +1,143 @@
+#!/bin/sh
+# Run only in the disposable Debian 13 amd64 QA container, never a crew host.
+set -eu
+test "$(id -u)" = 0
+test -f /.dockerenv
+. /etc/os-release
+test "$ID:$VERSION_ID" = debian:13
+test "$(dpkg --print-architecture)" = amd64
+test "$#" = 2
+deb=$(realpath "$1")
+evidence=$(realpath "$2")
+test "$(dpkg-deb -f "$deb" Package)" = shuttle
+mkdir -p "$evidence"
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+export HOME="$work/home"
+export SHUTTLE_STATE_DIR="$HOME/state"
+export SHUTTLE_KEY_DIR="$HOME/keys"
+unset QUIPU_SERVER QUIPU_AUTH_TOKEN QUIPU_AUTH_TOKEN_FILE
+mkdir -p "$HOME"
+cd "$HOME"
+
+# Provision distro dependencies before tracing package operations. No network
+# access is needed by shuttle's maintainer scripts or these offline controls.
+apt-get update -qq
+apt-get install -y -qq --no-install-recommends python3 python3-cryptography strace >/dev/null
+
+package_op() {
+    stage=$1
+    shift
+    strace -f -qq -e trace=network -o "$evidence/$stage.network" "$@"
+    if grep -E 'AF_INET6?' "$evidence/$stage.network"; then
+        echo "unexpected IP network operation during $stage" >&2
+        exit 1
+    fi
+}
+
+owned_files() {
+    dpkg-query -L shuttle | while IFS= read -r path; do
+        if test -f "$path" || test -L "$path"; then
+            printf '%s\n' "$path"
+        fi
+    done
+}
+
+check_installed() {
+    expected=$1
+    installed_stage=$2
+    test "$(dpkg-query -W -f='${Status}' shuttle)" = 'install ok installed'
+    test "$(dpkg-query -W -f='${Version}' shuttle)" = "$expected"
+    test -z "$(dpkg-query -W -f='${Conffiles}' shuttle)"
+    test -z "$(dpkg --verify shuttle)"
+    owned_files > "$work/owned-files"
+    while IFS= read -r path; do
+        case "$path" in
+            /usr/bin/shuttle|/usr/lib/python3/dist-packages/shuttle/*|/usr/lib/python3/dist-packages/shuttle-*.dist-info/*|/usr/share/doc/shuttle/*|/usr/share/man/man1/shuttle.1.gz) ;;
+            *) echo "unexpected package-owned file: $path" >&2; exit 1 ;;
+        esac
+        dpkg-query -S "$path" | grep -F "shuttle: $path" >/dev/null
+    done < "$work/owned-files"
+    package_op "$installed_stage-help" /usr/bin/shuttle --help >/dev/null
+    package_op "$installed_stage-version" /usr/bin/shuttle --version
+}
+
+check_removed() {
+    while IFS= read -r path; do
+        test ! -e "$path"
+        test ! -L "$path"
+    done < "$work/owned-files"
+}
+
+check_fixture() {
+    sha256sum -c "$work/fixture.sha256" >/dev/null
+    # Also reject added files, not just modifications to the original fixture.
+    find "$HOME" -type f -print | LC_ALL=C sort > "$work/current-files"
+    cmp "$work/fixture-files" "$work/current-files"
+    find "$HOME" -type f -printf '%P %m %U %G\n' | LC_ALL=C sort > "$work/current-modes"
+    cmp "$work/fixture-modes" "$work/current-modes"
+}
+
+version=$(dpkg-deb -f "$deb" Version)
+package_op install dpkg -i "$deb"
+check_installed "$version" install
+test ! -e "$SHUTTLE_STATE_DIR"
+test ! -e "$SHUTTLE_KEY_DIR"
+test ! -e /root/.config/shuttle
+test ! -e /root/.local/state/shuttle
+
+# Real installed APIs create synthetic, user-owned state and signing keys.
+# No graph is configured, contacted or populated.
+package_op fixture /usr/bin/python3 - <<'PY'
+import os
+from pathlib import Path
+from shuttle.signing import sign_transition, verify_transition, public_key_hex
+from shuttle.state import append, records
+
+state = Path(os.environ['SHUTTLE_STATE_DIR'])
+keys = Path(os.environ['SHUTTLE_KEY_DIR'])
+record = {'type': 'lifecycle-fixture', 'source': 'offline-package-test'}
+append(record, root=state)
+assert records(root=state) == [record]
+args = ('urn:test:lifecycle', 'claim', 'open', 'claimed', '2026-01-01T00:00:00Z', 'fixture')
+signature = sign_transition('fixture', *args[:-1], root=keys)
+assert verify_transition(public_key_hex('fixture', keys), signature, *args)
+assert not verify_transition(public_key_hex('fixture', keys), signature, *args[:-2], '2026-01-02T00:00:00Z', args[-1])
+PY
+find "$HOME" -type f -print | LC_ALL=C sort > "$work/fixture-files"
+find "$HOME" -type f -printf '%P %m %U %G\n' | LC_ALL=C sort > "$work/fixture-modes"
+while IFS= read -r path; do sha256sum "$path"; done < "$work/fixture-files" > "$work/fixture.sha256"
+test -s "$work/fixture.sha256"
+
+# A synthetic, strictly newer Debian revision exercises dpkg's upgrade path.
+# The application bytes are unchanged: this is not application-version or
+# state-format migration compatibility, and this fixture is never published.
+upgrade_version="${version}+qa1"
+dpkg --compare-versions "$upgrade_version" gt "$version"
+dpkg-deb --raw-extract "$deb" "$work/upgrade"
+/usr/bin/python3 - "$work/upgrade/DEBIAN/control" "$upgrade_version" <<'PY'
+import sys
+from pathlib import Path
+p = Path(sys.argv[1])
+lines = p.read_text().splitlines()
+assert sum(line.startswith('Version: ') for line in lines) == 1
+p.write_text('\n'.join('Version: ' + sys.argv[2] if line.startswith('Version: ') else line for line in lines) + '\n')
+PY
+dpkg-deb --build --root-owner-group "$work/upgrade" "$work/upgrade.deb" >/dev/null
+package_op upgrade dpkg -i "$work/upgrade.deb"
+check_installed "$upgrade_version" upgrade
+check_fixture
+
+package_op remove dpkg --remove shuttle
+check_removed
+check_fixture
+package_op reinstall dpkg -i "$work/upgrade.deb"
+check_installed "$upgrade_version" reinstall
+check_fixture
+package_op purge dpkg --purge shuttle
+check_removed
+check_fixture
+test -z "$(dpkg-query -L shuttle 2>/dev/null || true)"
+test ! -e /root/.config/shuttle
+test ! -e /root/.local/state/shuttle
+printf 'PASS: %s -> %s -> remove -> reinstall -> purge; owned files removed; user state/keys unchanged; no IP network operations\n' "$version" "$upgrade_version" | tee "$evidence/summary.txt"

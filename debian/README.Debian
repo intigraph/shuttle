@@ -22,5 +22,11 @@ purge in fresh containers. A second build compares binary package bytes. Build
 logs, packages, lintian findings and comparison hashes are retained as CI artifacts.
 This checks the supplied source and distro inputs; it is not archive admission,
 a cross-version upgrade test or independent arm64 execution qualification.
+An additional container-only lifecycle control upgrades to a synthetic newer
+Debian revision of the same application bytes, removes, reinstalls and purges
+it. It checks dpkg ownership, retained synthetic user state/signing-key hashes,
+and IP network syscalls during package operations and offline CLI controls.
+The synthetic revision is never published. This does not test migration between
+different application versions or state formats.
 The installed manual page is available as shuttle(1). Maintainer appointment/copyright attribution require owner confirmation
 before any external submission. No external submission is authorized here.
