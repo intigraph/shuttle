@@ -11,7 +11,7 @@ section here; CI refuses a version with no section (see
 
 ### Features
 
-* **cli:** shuttle prime per the stack prime contract (aegis-km3g.11) ([#22](https://github.com/intigraph/shuttle/issues/22)) ([0d44e49](https://github.com/intigraph/shuttle/commit/0d44e49dfcc1e676be88834fc62d3b608258f28e))
+* **cli:** shuttle prime per the stack prime contract ([#22](https://github.com/intigraph/shuttle/issues/22)) ([0d44e49](https://github.com/intigraph/shuttle/commit/0d44e49dfcc1e676be88834fc62d3b608258f28e))
 
 
 ### Bug Fixes
