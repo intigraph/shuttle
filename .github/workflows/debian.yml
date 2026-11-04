@@ -157,6 +157,14 @@ jobs:
             echo "lifecycle smoke: install, reinstall, remove and purge OK"
           '
 
+      - name: Versioned package lifecycle with retained user state and keys
+        run: |
+          mkdir -p out/lifecycle
+          docker run --rm -e DEBIAN_FRONTEND=noninteractive \
+            -v "$PWD/out:/out" -v "$PWD/src/debian/ci:/tests:ro" \
+            debian:trixie@sha256:2dc419c6d7fe3dad0a2f9fd469c34cc90b0f9ba642d8fde837fe3d7d34a0e7f1 \
+            sh -c 'exec sh /tests/package-lifecycle /out/shuttle_*_all.deb /out/lifecycle'
+
       - name: Keep the build log and packages
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -174,6 +182,7 @@ jobs:
             out/lintian.txt
             out/autopkgtest/
             out/reproducibility.txt
+            out/lifecycle/
             repeat/*.deb
             repeat/build.log
           if-no-files-found: warn
