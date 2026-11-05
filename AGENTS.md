@@ -50,9 +50,8 @@ do not open pull requests, unless explicitly asked. `just check` and
 `just test` green before every push; never force-push `main`; small complete
 commits. Work is not complete until `git push` succeeds.
 
-## Beads: this repo is JSONL-only, no Dolt
+## Local tracker files
 
-Do not run `bd init`. `.beads/issues.jsonl` IS the tracker; append/close by
-editing the JSONL additively (a record never disappears, a closed issue
-never reopens, notes only grow), committed as
-`chore(beads): ... (jsonl export)`.
+Legacy local tracker state is excluded from the published source tree.
+Use the configured project tracker; do not initialize a second store here.
+Earlier tracked records remain available in Git history.

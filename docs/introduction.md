@@ -28,7 +28,7 @@ Consumers read the graph, never shuttle.
 
 - [camayoc](https://github.com/scbrown/camayoc) owns the vocabulary: the
   workflow slice (`WorkflowRun`, `TransitionEvent`, …).
-- [caboodle](https://github.com/scbrown/caboodle) installs and verifies
+- [tambo](https://github.com/intigraph/tambo) installs and verifies
   shuttle as a stack member.
 - [seeds](https://github.com/scbrown/seeds) work items can perform a step
   (see [Seed steps](seed-steps.md)).

@@ -50,7 +50,7 @@ graph, never shuttle.
 - **[camayoc](https://github.com/scbrown/camayoc)** owns the vocabulary:
   the workflow slice (`WorkflowRun`, `TransitionEvent`, …), each term owed to a
   competency question in `competency/workflow-and-archive.md`.
-- **[caboodle](https://github.com/scbrown/caboodle)** installs and verifies
+- **[tambo](https://github.com/intigraph/tambo)** installs and verifies
   shuttle as part of the box.
 
 ## Quick start

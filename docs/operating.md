@@ -8,7 +8,7 @@ for ed25519 only. Each release publishes a wheel, an sdist and
 
 | route | use it for |
 |---|---|
-| `caboodle install --tool shuttle` | a stack box. Installs the release wheel whose SHA-256 caboodle was reviewed with, then `caboodle verify --tool shuttle` runs a real run round trip in a throwaway HOME. |
+| `tambo install --tool shuttle` | a stack box. Installs the release wheel whose SHA-256 tambo was reviewed with, then `tambo verify --tool shuttle` runs a real run round trip in a throwaway HOME. |
 | the release wheel | anything else: check it against `checksums.txt`, then `pipx install shuttle-<version>-py3-none-any.whl`. |
 | `pip install -e .` | development. |
 
@@ -43,5 +43,5 @@ as a silent success.
 
 ```bash
 shuttle version
-caboodle verify --tool shuttle     # define -> start -> advance -> status, hermetic
+tambo verify --tool shuttle     # define -> start -> advance -> status, hermetic
 ```
