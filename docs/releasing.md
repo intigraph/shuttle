@@ -23,5 +23,5 @@ The `release` workflow then:
 
 - The unattended actuator on the fleet host installs the new release on its
   next tick (checksum-verified, command-tested, atomically promoted).
-- caboodle installs only the version its member manifest pins. Move the pin
-  with `caboodle bump-member members/shuttle.toml` in a caboodle PR.
+- tambo installs only the version its member manifest pins. Move the pin
+  with `tambo bump-member members/shuttle.toml` in a tambo PR.

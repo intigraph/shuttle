@@ -111,7 +111,7 @@
       "source": "docs/operating.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/docs%2Foperating.md",
       "summary": "Read the operational command and environment contract before exporting or freezing workflow history.",
-      "source_sha256": "d5634302171e1787507a4e065b46126fd4e3daa328954209981719817382bc64",
+      "source_sha256": "04d29b3c20d8cfc617ddff61a352abfe7bd2c9e0f392831c32c563f4a860b24c",
       "properties": {
         "startHereOrder": 2
       }
