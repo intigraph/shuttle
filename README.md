@@ -123,3 +123,11 @@ Run `just check` and `just test` before submitting a change.
 ## 📜 License
 
 [License](LICENSE).
+
+
+### Repository pendant provider
+
+Repository pendant builders require explicitly pinned model and tokenizer bytes
+and an embedding dimension. The input contract is in
+[`repository_share_embedding.py`](scripts/repository_share_embedding.py). This
+source plumbing does not enable publication or qualify a provider.
