@@ -6,6 +6,13 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.8.1](https://github.com/intigraph/shuttle/compare/v0.8.0...v0.8.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* require pinned embedding providers in repository shares ([#32](https://github.com/intigraph/shuttle/issues/32)) ([742c3ae](https://github.com/intigraph/shuttle/commit/742c3aee8bb8cc57f0d32ad3d7bf6b92aea12ee3))
+
 ## [0.8.0](https://github.com/intigraph/shuttle/compare/v0.7.0...v0.8.0) (2026-11-04)
 
 
