@@ -1,7 +1,7 @@
 Source: shuttle
 Section: utils
 Priority: optional
-Maintainer: Unassigned packaging maintainer <unassigned@example.invalid>
+Maintainer: Intigraph Packaging <packaging@intigraph.ai>
 Build-Depends: debhelper-compat (= 13), dh-python, pybuild-plugin-pyproject,
  python3-all (>= 3.11), python3-setuptools (>= 68), python3-cryptography (>= 41)
 Standards-Version: 4.7.4
