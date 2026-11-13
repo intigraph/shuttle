@@ -104,3 +104,17 @@ the source proposal and was replayed with
 `scriptreplay --log-out scheduled-port.log --log-timing scheduled-port.timing`.
 Download both artifacts for replay; no inline video or installed/live proof is
 claimed. This script imports the repository's isolated test fixture.
+
+### One declared occurrence
+
+A pinned configuration can replace `interval_s` (or the three weekly fields)
+with exactly `repeat_count: 1`. Its activation boundary must equal its original
+anchor. The cadence accepts only that exact integer UTC slot; earlier, later,
+boolean and floating-point slots refuse before a declaration eligibility read.
+Other counts and mixed recurrence forms refuse. Fixed and weekly contracts
+are unchanged.
+
+Pair this with a reviewed one-occurrence declaration/query and a producer that
+retains the original slot identity. Current identity, exact manifest, signed
+transitions, durable publication and maximum lateness are still required.
+A missed occurrence is never rescheduled by changing its delivery timestamp.
