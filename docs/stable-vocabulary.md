@@ -17,7 +17,9 @@ historical graph. An explicitly configured historical instance base remains an
 operator-controlled identity parameter; it must not be changed to migrate terms.
 
 Verification and signed fixed/calendar history readers query both the published
-and historical literal predicates. Known vocabulary terms are normalized only
+and historical literal predicates using explicit UNION branches, retaining the
+established native-reader compatibility form rather than alternate predicate
+paths for literal objects. Known vocabulary terms are normalized only
 for comparison; subject and reference identities and signatures remain exact.
 Duplicate aliases remain visible to existing cardinality checks and refuse.
 No inference or `sameAs` activation is required for these readers.

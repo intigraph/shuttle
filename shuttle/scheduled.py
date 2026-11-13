@@ -106,8 +106,10 @@ class ScheduledRunPort:
             raise ScheduledRefused('current declaration eligibility is not proven')
         rows = _rows(self.query(
             f'SELECT ?verifier ?pk ?workflow (isIRI(?workflow) AS ?scopeIRI) WHERE {{ '
-            f'<{self.registration}> a ?type ; {vocabulary.path("verifier")} ?verifier ; '
-            f'{vocabulary.path("publicKey")} ?pk ; {vocabulary.path("attests")} ?workflow . '
+            f'<{self.registration}> a ?type . '
+            f'{vocabulary.pattern("<"+self.registration+">", "verifier", "?verifier")} '
+            f'{vocabulary.pattern("<"+self.registration+">", "publicKey", "?pk")} '
+            f'{vocabulary.pattern("<"+self.registration+">", "attests", "?workflow")} '
             f'{vocabulary.type_filter("?type", "VerifierRegistration")} }} LIMIT 8',
             graph=self.identity_graph), 8)
         if len(rows) != 1 or rows[0].get('scopeIRI') is not True or rows[0] != {
@@ -241,7 +243,7 @@ class ScheduledRunPort:
             'SELECT (STR(?event) AS ?ev) (STR(?predicate) AS ?p) '
             '(STR(?raw) AS ?value) (isIRI(?raw) AS ?iri) '
             '(STR(DATATYPE(?raw)) AS ?datatype) WHERE { '
-            f'?event {vocabulary.path("inRun")} <{export.run_iri(run)}> ; ?predicate ?raw '
+            f'{vocabulary.pattern("?event", "inRun", "<"+export.run_iri(run)+">")} ?event ?predicate ?raw '
             '} LIMIT 64', graph=graph), 64)
         expected = set()
         for seq, rec in enumerate(recs[2:], 2):

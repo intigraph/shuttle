@@ -42,8 +42,11 @@ class StableVocabulary(unittest.TestCase):
         from shuttle import vocabulary as vocab
         self.assertEqual(vocab.term('WorkflowRun'), QUIPU + 'WorkflowRun')
         self.assertEqual(vocab.term('currentState'), CORE + 'currentState')
-        self.assertIn('<' + LEGACY + 'inRun>', vocab.path('inRun'))
-        self.assertIn('<' + CORE + 'inRun>', vocab.path('inRun'))
+        query = vocab.pattern('?event', 'signature', '?signature')
+        self.assertIn('<' + LEGACY + 'signature>', query)
+        self.assertIn('<' + CORE + 'signature>', query)
+        self.assertIn('UNION', query)
+        self.assertNotIn('|', query)  # native literal-object path compatibility
         with self.assertRaises(KeyError):
             vocab.term('InventedTerm')
 

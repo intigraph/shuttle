@@ -20,9 +20,14 @@ def term(name: str) -> str:
     return _OWNERS[name] + name
 
 
-def path(name: str) -> str:
-    """Literal-predicate alternatives; no inference or instance-IRI rewriting."""
-    return f'(<{term(name)}>|<{LEGACY + name}>)'
+def pattern(subject: str, name: str, obj: str) -> str:
+    """Explicit UNION for native readers that drop literals on alternate paths.
+
+    Subject/object are internal SPARQL fragments, never caller text. Keep each
+    alternative grouped before joining it to the next required field.
+    """
+    return (f'{{ {{ {subject} <{term(name)}> {obj} }} UNION '
+            f'{{ {subject} <{LEGACY + name}> {obj} }} }}')
 
 
 def type_filter(variable: str, name: str) -> str:

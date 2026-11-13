@@ -152,8 +152,10 @@ class ScheduledHistory:
                 raise ScheduledRefused('current declaration eligibility unavailable')
             registration = _rows(self.query(
                 f'SELECT ?verifier ?pk ?workflow (isIRI(?workflow) AS ?scopeIRI) WHERE {{ '
-                f'<{self.registration}> a ?type ; {vocabulary.path("verifier")} ?verifier ; '
-                f'{vocabulary.path("publicKey")} ?pk ; {vocabulary.path("attests")} ?workflow . '
+                f'<{self.registration}> a ?type . '
+                f'{vocabulary.pattern("<"+self.registration+">", "verifier", "?verifier")} '
+                f'{vocabulary.pattern("<"+self.registration+">", "publicKey", "?pk")} '
+                f'{vocabulary.pattern("<"+self.registration+">", "attests", "?workflow")} '
                 f'{vocabulary.type_filter("?type", "VerifierRegistration")} }} LIMIT 8',
                 graph=self.identity_graph), 8)
             if (len(registration) != 1 or registration[0].get('scopeIRI') is not True or
@@ -167,7 +169,7 @@ class ScheduledHistory:
                 '(STR(?raw) AS ?value) (isIRI(?raw) AS ?iri) '
                 '(STR(DATATYPE(?raw)) AS ?datatype) WHERE { VALUES ?run { '
                 + ' '.join('<'+iri+'>' for iri in iris) + ' } '
-                + f'?event {vocabulary.path("inRun")} ?run ; ?predicate ?raw }} LIMIT 64',
+                + f'{vocabulary.pattern("?event", "inRun", "?run")} ?event ?predicate ?raw }} LIMIT 64',
                 graph=windows.window_iri(month)), 64)
             grouped = [[r for r in rows if r.get('ev') in
                         (export.event_iri(run, 2), export.event_iri(run, 3))] for run in runs]
