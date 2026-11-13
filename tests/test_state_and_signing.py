@@ -91,7 +91,7 @@ class SigningTests(unittest.TestCase):
 
     def test_the_registration_turtle_names_agent_key_and_workflow(self):
         t = signing.registration_turtle("agent-a", "urn:shuttle:workflow:triage", self.root)
-        self.assertIn('aegis:verifier  "agent-a"', t)
+        self.assertIn('core:verifier  "agent-a"', t)
         self.assertIn(signing.public_key_hex("agent-a", self.root), t)
         self.assertIn("VerifierRegistration", t)
 

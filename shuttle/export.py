@@ -11,10 +11,10 @@ after a record's write lands — never speculatively.
 What a transition exports (the camayoc workflow slice,
 `competency/workflow-and-archive.md` Q1–Q8):
 
-- an `aegis:TransitionEvent` with step, from/to states, time,
-  `aegis:performedBy` and `aegis:signature` (hex ed25519 over the canonical
+- an `qp:TransitionEvent` with step, from/to states, time,
+  `core:performedBy` and `core:signature` (hex ed25519 over the canonical
   `shuttle-transition-v1` message — re-derivable from these facts alone);
-- a re-asserted `aegis:currentState` on the run — derived convenience; the
+- a re-asserted `core:currentState` on the run — derived convenience; the
   events are the truth, nothing is mutated in place.
 
 Pre-export, shuttle verifies its OWN signature (fail fast on key drift);
@@ -26,7 +26,7 @@ from __future__ import annotations
 import os
 
 from . import quipu_client as qc
-from . import signing, state, windows
+from . import signing, state, windows, vocabulary
 
 
 class ExportError(RuntimeError):
@@ -49,23 +49,23 @@ def event_iri(run_id: str, seq: int) -> str:
     return f"{entity_ns()}event:{run_id}:{seq}"
 
 
-AEGIS = "http://aegis.gastown.local/ontology/"
+AEGIS = vocabulary.LEGACY  # compatibility only; new facts use exact term owners
 PROV = "http://www.w3.org/ns/prov#"
 
 
 def _prefixes() -> str:
-    return f"@prefix aegis: <{AEGIS}> .\n@prefix prov: <{PROV}> .\n"
+    return vocabulary.prefixes() + f"@prefix prov: <{PROV}> .\n"
 
 
 def definition_turtle(rec: dict) -> str:
     """A WorkflowDefinition and its declared steps — durable knowledge shape,
     but exported beside the runs so the window is self-describing."""
     wf = workflow_iri(rec["name"])
-    lines = [_prefixes(), f"<{wf}> a aegis:WorkflowDefinition ."]
+    lines = [_prefixes(), f"<{wf}> a qp:WorkflowDefinition ."]
     for t in rec["transitions"]:
         step = f"{wf}/step/{t['step']}"
-        lines.append(f"<{wf}> aegis:hasStep <{step}> .")
-        lines.append(f"<{step}> a aegis:WorkflowStep .")
+        lines.append(f"<{wf}> core:hasStep <{step}> .")
+        lines.append(f"<{step}> a qp:WorkflowStep .")
     return "\n".join(lines) + "\n"
 
 
@@ -73,11 +73,11 @@ def start_turtle(rec: dict) -> str:
     r = run_iri(rec["run"])
     return (
         _prefixes()
-        + f"<{r}> a aegis:WorkflowRun ;\n"
-        + f'    aegis:runOf <{workflow_iri(rec["definition"])}> ;\n'
-        + f'    aegis:currentState "{rec["state"]}" ;\n'
-        + f'    aegis:createdAt "{rec["at"]}" ;\n'
-        + f'    aegis:sourceKind "observed" .\n'
+        + f"<{r}> a qp:WorkflowRun ;\n"
+        + f'    core:runOf <{workflow_iri(rec["definition"])}> ;\n'
+        + f'    core:currentState "{rec["state"]}" ;\n'
+        + f'    core:createdAt "{rec["at"]}" ;\n'
+        + f'    core:sourceKind "observed" .\n'
     )
 
 
@@ -87,16 +87,16 @@ def transition_turtle(rec: dict, seq: int) -> str:
     wf_step = f'{workflow_iri(rec["definition"])}/step/{rec["step"]}'
     return (
         _prefixes()
-        + f"<{ev}> a aegis:TransitionEvent ;\n"
-        + f"    aegis:inRun <{r}> ;\n"
-        + f"    aegis:atStep <{wf_step}> ;\n"
-        + f'    aegis:fromState "{rec["from"]}" ;\n'
-        + f'    aegis:toState "{rec["to"]}" ;\n'
+        + f"<{ev}> a qp:TransitionEvent ;\n"
+        + f"    core:inRun <{r}> ;\n"
+        + f"    core:atStep <{wf_step}> ;\n"
+        + f'    core:fromState "{rec["from"]}" ;\n'
+        + f'    core:toState "{rec["to"]}" ;\n'
         + f'    prov:endedAtTime "{rec["at"]}" ;\n'
-        + f'    aegis:performedBy <{entity_ns()}agent:{rec["agent"]}> ;\n'
-        + f'    aegis:signature "{rec["signature"]}" ;\n'
-        + f'    aegis:sourceKind "observed" .\n'
-        + f'<{r}> aegis:currentState "{rec["to"]}" .\n'
+        + f'    core:performedBy <{entity_ns()}agent:{rec["agent"]}> ;\n'
+        + f'    core:signature "{rec["signature"]}" ;\n'
+        + f'    core:sourceKind "observed" .\n'
+        + f'<{r}> core:currentState "{rec["to"]}" .\n'
     )
 
 
@@ -115,7 +115,7 @@ def _definitions_by_name(recs: list[dict]) -> dict[str, dict]:
 
 
 def _workflow_of(rec: dict) -> str | None:
-    """The workflow a record asserts `aegis:runOf` against, if any."""
+    """The workflow a record asserts `core:runOf` against, if any."""
     kind = rec.get("type")
     if kind in ("start", "transition"):
         return rec.get("definition")
@@ -182,7 +182,7 @@ def export(root=None, strict: bool = False) -> dict:
     A `define` record exports into the window of the month it was RECORDED.
     Runs export into the window of the month they RAN. Those are the same
     month exactly once — the month a workflow is introduced. Every month
-    afterwards, a run asserts `aegis:runOf` against a workflow that the new
+    afterwards, a run asserts `core:runOf` against a workflow that the new
     window has never heard of, SHACL's class constraint refuses it, and one
     refusal stops the whole drain.
 

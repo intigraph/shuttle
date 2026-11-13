@@ -1,0 +1,2 @@
+# Preserve output-only terminal recording bytes for scriptreplay.
+docs/demos/stable-vocabulary/output.log -text whitespace=cr-at-eol

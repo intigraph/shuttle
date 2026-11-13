@@ -3,7 +3,7 @@
 Mirrors quipu `src/signing.rs`'s custody exactly: one keypair per agent in a
 host file created 0600, auto-generated on first use, never printed. The
 private key never leaves the host; the PUBLIC key is registered by a HUMAN
-as an `aegis:VerifierRegistration` fact in a `dataKind=identity` graph —
+as an `qp:VerifierRegistration` fact in a `dataKind=identity` graph —
 shuttle never registers its own keys, which is what keeps the trust root
 human-owned (the quipu governance rule: quipu never self-registers either).
 
@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import os
 import stat
+
+from . import vocabulary
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
@@ -200,17 +202,17 @@ def verify_transition(
 
 
 def registration_turtle(agent: str, workflow_iri: str, root: Path | None = None) -> str:
-    """The `aegis:VerifierRegistration` a HUMAN loads into the identity graph.
+    """The `qp:VerifierRegistration` a HUMAN loads into the identity graph.
 
     Printed for a person to review and load — shuttle never posts this
     itself. The vocabulary is quipu-owned aegis terms, the same shape quipu's
     governance router verifies decisions against.
     """
     pk = public_key_hex(agent, root)
-    return f"""@prefix aegis: <http://aegis.gastown.local/ontology/> .
+    return f"""{vocabulary.prefixes()}
 
-<urn:shuttle:registration:{agent}> a aegis:VerifierRegistration ;
-    aegis:verifier  "{agent}" ;
-    aegis:attests   <{workflow_iri}> ;
-    aegis:publicKey "{pk}" .
+<urn:shuttle:registration:{agent}> a qp:VerifierRegistration ;
+    core:verifier  "{agent}" ;
+    core:attests   <{workflow_iri}> ;
+    core:publicKey "{pk}" .
 """

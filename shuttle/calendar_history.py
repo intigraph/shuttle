@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 import re
 from zoneinfo import ZoneInfo
 
-from . import export, windows
+from . import export, windows, vocabulary
 from .scheduled import ScheduledRefused, _rows
 from .scheduled_history import ScheduledHistory
 
@@ -98,12 +98,11 @@ class CalendarScheduledHistory:
                 return {'verdict': 'NOT_DUE', 'slot': None}
             if any(v.eligible(dict(v.binding), s) is not True for s in (control, slot)):
                 raise ScheduledRefused('current declaration eligibility unavailable')
-            a = export.AEGIS
             registration = _rows(v.query(
                 f'SELECT ?verifier ?pk ?workflow (isIRI(?workflow) AS ?scopeIRI) WHERE {{ '
-                f'<{v.registration}> a ?type ; <{a}verifier> ?verifier ; '
-                f'<{a}publicKey> ?pk ; <{a}attests> ?workflow . '
-                f'FILTER(?type = <{a}VerifierRegistration>) }} LIMIT 8',
+                f'<{v.registration}> a ?type ; {vocabulary.path("verifier")} ?verifier ; '
+                f'{vocabulary.path("publicKey")} ?pk ; {vocabulary.path("attests")} ?workflow . '
+                f'{vocabulary.type_filter("?type", "VerifierRegistration")} }} LIMIT 8',
                 graph=v.identity_graph), 8)
             if registration != [{'verifier': v.binding['agent'], 'pk': v.public_key,
                                  'workflow': v.binding['workflow'], 'scopeIRI': True}] or \
@@ -115,7 +114,7 @@ class CalendarScheduledHistory:
                 '(STR(?raw) AS ?value) (isIRI(?raw) AS ?iri) '
                 '(STR(DATATYPE(?raw)) AS ?datatype) WHERE { VALUES ?run { '
                 + ' '.join('<'+export.run_iri(run)+'>' for run in runs) + ' } '
-                + f'?event <{a}inRun> ?run ; ?predicate ?raw }} LIMIT 64',
+                + f'?event {vocabulary.path("inRun")} ?run ; ?predicate ?raw }} LIMIT 64',
                 graph=windows.window_iri(month)), 64)
             grouped = [[r for r in rows if r.get('ev') in
                         (export.event_iri(run, 2), export.event_iri(run, 3))] for run in runs]
