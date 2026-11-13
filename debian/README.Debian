@@ -28,5 +28,6 @@ it. It checks dpkg ownership, retained synthetic user state/signing-key hashes,
 and IP network syscalls during package operations and offline CLI controls.
 The synthetic revision is never published. This does not test migration between
 different application versions or state formats.
-The installed manual page is available as shuttle(1). Maintainer appointment/copyright attribution require owner confirmation
-before any external submission. No external submission is authorized here.
+The installed manual page is available as shuttle(1). The appointed packaging
+maintainer is Intigraph Packaging <packaging@intigraph.ai>; the copyright holder
+is Steve Brown. No external submission is authorized here.
