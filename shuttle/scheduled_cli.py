@@ -55,12 +55,17 @@ def cadence(config):
               'anchor_s', 'effective_from_s', 'max_lateness_s'}
     fixed = set(config) == common | {'interval_s'}
     weekly = set(config) == common | {'weekday', 'local_time', 'timezone'}
-    if not (fixed or weekly):
+    single = set(config) == common | {'repeat_count'}
+    if not (fixed or weekly or single):
         raise ScheduledRefused('complete single-form pinned configuration required')
     anchor, effective = (config[k] for k in ('anchor_s', 'effective_from_s'))
     if (type(anchor) is not int or not 0 <= anchor <= 253402214400 or
             type(effective) is not int or not anchor <= effective <= 253402214400):
         raise ScheduledRefused('bounded cadence anchor and activation boundary required')
+    if single:
+        if type(config['repeat_count']) is not int or config['repeat_count'] != 1 or effective != anchor:
+            raise ScheduledRefused('one occurrence at its original activation anchor required')
+        return lambda slot: type(slot) is int and slot == anchor
     if fixed:
         interval = config['interval_s']
         if type(interval) is not int or interval < 60:

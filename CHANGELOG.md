@@ -6,6 +6,18 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.9.0](https://github.com/intigraph/shuttle/compare/v0.8.1...v0.9.0) (2026-11-13)
+
+
+### Features
+
+* **schedules:** admit only one pinned UTC occurrence ([#38](https://github.com/intigraph/shuttle/issues/38)) ([c215fc2](https://github.com/intigraph/shuttle/commit/c215fc2f75fe2fac96365c6dac040166f4b9f7c9))
+
+
+### Bug Fixes
+
+* **debian:** apply appointed maintainer and copyright holder ([#35](https://github.com/intigraph/shuttle/issues/35)) ([0b6b849](https://github.com/intigraph/shuttle/commit/0b6b8492497c6f9e83027efb624f7e3a6dc13188))
+
 ## [0.8.1](https://github.com/intigraph/shuttle/compare/v0.8.0...v0.8.1) (2026-11-05)
 
 
