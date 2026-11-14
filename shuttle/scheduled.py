@@ -17,7 +17,7 @@ import re
 import time
 from typing import Callable
 
-from . import export, quipu_client as qc, signing, state, windows
+from . import export, quipu_client as qc, signing, state, windows, vocabulary
 
 _FIELDS = {'job', 'revision', 'host', 'manifest_sha256', 'agent', 'workflow'}
 _IRI = re.compile(r'^[A-Za-z][A-Za-z0-9+.-]*:[^\s<>"{}|^`\\]+$')
@@ -104,12 +104,13 @@ class ScheduledRunPort:
             raise ScheduledRefused('nonnegative UTC slot required')
         if self.eligible(dict(self.binding), scheduled_at) is not True:
             raise ScheduledRefused('current declaration eligibility is not proven')
-        a = export.AEGIS
         rows = _rows(self.query(
             f'SELECT ?verifier ?pk ?workflow (isIRI(?workflow) AS ?scopeIRI) WHERE {{ '
-            f'<{self.registration}> a ?type ; <{a}verifier> ?verifier ; '
-            f'<{a}publicKey> ?pk ; <{a}attests> ?workflow . '
-            f'FILTER(?type = <{a}VerifierRegistration>) }} LIMIT 8',
+            f'<{self.registration}> a ?type . '
+            f'{vocabulary.pattern("<"+self.registration+">", "verifier", "?verifier")} '
+            f'{vocabulary.pattern("<"+self.registration+">", "publicKey", "?pk")} '
+            f'{vocabulary.pattern("<"+self.registration+">", "attests", "?workflow")} '
+            f'{vocabulary.type_filter("?type", "VerifierRegistration")} }} LIMIT 8',
             graph=self.identity_graph), 8)
         if len(rows) != 1 or rows[0].get('scopeIRI') is not True or rows[0] != {
                 'verifier': self.binding['agent'], 'pk': self.public_key,
@@ -242,24 +243,25 @@ class ScheduledRunPort:
             'SELECT (STR(?event) AS ?ev) (STR(?predicate) AS ?p) '
             '(STR(?raw) AS ?value) (isIRI(?raw) AS ?iri) '
             '(STR(DATATYPE(?raw)) AS ?datatype) WHERE { '
-            f'?event <{export.AEGIS}inRun> <{export.run_iri(run)}> ; ?predicate ?raw '
+            f'{vocabulary.pattern("?event", "inRun", "<"+export.run_iri(run)+">")} ?event ?predicate ?raw '
             '} LIMIT 64', graph=graph), 64)
         expected = set()
         for seq, rec in enumerate(recs[2:], 2):
             ev = export.event_iri(run, seq)
-            facts = [(_RDF+'type', export.AEGIS+'TransitionEvent', True),
-                     (export.AEGIS+'inRun', export.run_iri(run), True),
-                     (export.AEGIS+'atStep', self.binding['workflow']+'/step/'+rec['step'], True),
-                     (export.AEGIS+'fromState', rec['from'], False),
-                     (export.AEGIS+'toState', rec['to'], False),
+            facts = [(_RDF+'type', vocabulary.term('TransitionEvent'), True),
+                     (vocabulary.term('inRun'), export.run_iri(run), True),
+                     (vocabulary.term('atStep'), self.binding['workflow']+'/step/'+rec['step'], True),
+                     (vocabulary.term('fromState'), rec['from'], False),
+                     (vocabulary.term('toState'), rec['to'], False),
                      (export.PROV+'endedAtTime', rec['at'], False),
-                     (export.AEGIS+'performedBy', self.namespace+'agent:'+rec['agent'], True),
-                     (export.AEGIS+'signature', rec['signature'], False),
-                     (export.AEGIS+'sourceKind', 'observed', False)]
+                     (vocabulary.term('performedBy'), self.namespace+'agent:'+rec['agent'], True),
+                     (vocabulary.term('signature'), rec['signature'], False),
+                     (vocabulary.term('sourceKind'), 'observed', False)]
             expected.update((ev, p, value, iri, None if iri else _XSD+'string')
                             for p, value, iri in facts)
         observed = set()
         for row in rows:
+            row = vocabulary.normalize_fact(row)
             if type(row.get('iri')) is not bool:
                 raise ScheduledRefused('typed read-back capability unavailable')
             observed.add((row.get('ev'), row.get('p'), row.get('value'), row['iri'],

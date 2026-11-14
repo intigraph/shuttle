@@ -20,19 +20,19 @@ class TurtleShapeTests(unittest.TestCase):
             "agent": "agent-a", "signature": "ab" * 64,
         }
         t = export.transition_turtle(rec, 3)
-        self.assertIn("aegis:TransitionEvent", t)
-        self.assertIn('aegis:signature "' + "ab" * 64, t)
-        self.assertIn('aegis:fromState "open"', t)
-        self.assertIn('aegis:toState "claimed"', t)
+        self.assertIn("qp:TransitionEvent", t)
+        self.assertIn('core:signature "' + "ab" * 64, t)
+        self.assertIn('core:fromState "open"', t)
+        self.assertIn('core:toState "claimed"', t)
         # The re-asserted derived state rides along; the event is the truth.
-        self.assertIn('aegis:currentState "claimed"', t)
-        self.assertIn('aegis:sourceKind "observed"', t)
+        self.assertIn('core:currentState "claimed"', t)
+        self.assertIn('core:sourceKind "observed"', t)
 
     def test_a_start_exports_the_run_shape(self):
         rec = {"type": "start", "run": "r1", "definition": "triage",
                "state": "open", "at": "2026-08-01T00:00:00Z", "agent": "a"}
         t = export.start_turtle(rec)
-        self.assertIn("aegis:WorkflowRun", t)
+        self.assertIn("qp:WorkflowRun", t)
         self.assertIn("urn:shuttle:workflow:triage", t)
 
 
@@ -144,7 +144,7 @@ class CliFlowTests(EnvIsolatedCase):
         run_window = [kn for kn in knots if "2026-08" in kn["graph"]]
         self.assertTrue(
             any(
-                "a aegis:WorkflowDefinition" in kn["turtle"]
+                "a qp:WorkflowDefinition" in kn["turtle"]
                 and "urn:shuttle:workflow:triage" in kn["turtle"]
                 for kn in run_window
             ),
@@ -184,7 +184,7 @@ class CliFlowTests(EnvIsolatedCase):
         for month in ("2026-08", "2026-09"):
             declared = [
                 kn for kn in knots
-                if month in kn["graph"] and "a aegis:WorkflowDefinition" in kn["turtle"]
+                if month in kn["graph"] and "a qp:WorkflowDefinition" in kn["turtle"]
             ]
             self.assertTrue(
                 declared,

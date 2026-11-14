@@ -40,7 +40,8 @@ class HistoryTests(unittest.TestCase):
             self.assertEqual(graph, windows.window_iri('2026-10'))
             requested = set(re.findall(r'<(urn:shuttle:run:[^>]+)>', text))
             events = {row['ev'] for row in f.facts.values()
-                      if row['p'] == export.AEGIS+'inRun' and row['value'] in requested}
+                      if export.vocabulary.normalize_fact(row)['p'] == export.vocabulary.term('inRun')
+                      and row['value'] in requested}
             rows = [dict(row) for row in f.facts.values() if row['ev'] in events]
             rows += self.extra
         return {'rows': rows, 'count': len(rows), 'truncated': self.truncated}
@@ -94,6 +95,31 @@ class HistoryTests(unittest.TestCase):
         self.fixture.facts.clear()
         self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
 
+    def test_historical_legacy_facts_verify_without_rewriting_signed_identities(self):
+        self.due()
+        vocab = export.vocabulary
+        def old_term(value):
+            for prefix in (vocab.CORE, vocab.QUIPU):
+                if value.startswith(prefix):
+                    return vocab.LEGACY + value[len(prefix):]
+            return value
+        before = list(self.fixture.facts.values())
+        legacy = [{**row, 'p': old_term(row['p']),
+                   'value': old_term(row['value']) if row['p'] == fixtures._RDF()+'type'
+                   else row['value']} for row in before]
+        self.fixture.facts = {(row['ev'], row['p']): row for row in legacy}
+        self.assertEqual(self.measure()['verdict'], 'SUCCEEDED')
+        self.assertEqual([r['ev'] for r in legacy], [r['ev'] for r in before])
+        self.assertIn('<'+vocab.LEGACY+'inRun>', self.fixture.queries[-1][0])
+        self.assertEqual(list(self.fixture.facts.values()), legacy)
+
+    def test_duplicate_legacy_and_canonical_fact_stays_unknown(self):
+        self.due()
+        row = next(r for r in self.fixture.facts.values()
+                   if r['p'] == export.vocabulary.term('signature'))
+        self.extra = [{**row, 'p': export.AEGIS+'signature'}]
+        self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
+
     def test_every_control_fact_is_required_and_integrity_checked(self):
         original = dict(self.fixture.facts)
         for key, row in original.items():
@@ -115,12 +141,12 @@ class HistoryTests(unittest.TestCase):
     def test_tampered_due_is_unknown_not_failed(self):
         self.due()
         event = export.event_iri(self.history._run(self.control+60), 3)
-        self.fixture.facts[(event, export.AEGIS+'signature')]['value'] = '0'*128
+        self.fixture.facts[(event, export.vocabulary.term('signature'))]['value'] = '0'*128
         self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
 
     def test_failed_positive_control_is_not_coverage(self):
         event = export.event_iri(self.history._run(self.control), 3)
-        self.fixture.facts[(event, export.AEGIS+'toState')]['value'] = 'failed'
+        self.fixture.facts[(event, export.vocabulary.term('toState'))]['value'] = 'failed'
         self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
 
     def test_truncated_transport_and_current_eligibility_unknown(self):
@@ -147,7 +173,7 @@ class HistoryTests(unittest.TestCase):
     def test_partial_target_cannot_be_reported_missing(self):
         self.due()
         event = export.event_iri(self.history._run(self.control+60), 3)
-        del self.fixture.facts[(event, export.AEGIS+'sourceKind')]
+        del self.fixture.facts[(event, export.vocabulary.term('sourceKind'))]
         self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
 
     def test_start_outside_window_unknown_even_with_valid_signature(self):
@@ -159,7 +185,7 @@ class HistoryTests(unittest.TestCase):
         sig = signing.sign_transition(self.fixture.scope.agent, run, 'started', 'queued',
                                       'running', at, require_existing_key=True)
         self.fixture.facts[(event, export.PROV+'endedAtTime')]['value'] = at
-        self.fixture.facts[(event, export.AEGIS+'signature')]['value'] = sig
+        self.fixture.facts[(event, export.vocabulary.term('signature'))]['value'] = sig
         self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
 
     def test_future_or_reversed_end_unknown_even_with_valid_signature(self):
@@ -172,7 +198,7 @@ class HistoryTests(unittest.TestCase):
                 export.run_iri(self.history._run(self.control+60)), 'succeeded',
                 'running', 'succeeded', at, require_existing_key=True)
             self.fixture.facts[(event, export.PROV+'endedAtTime')]['value'] = at
-            self.fixture.facts[(event, export.AEGIS+'signature')]['value'] = sig
+            self.fixture.facts[(event, export.vocabulary.term('signature'))]['value'] = sig
             self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
 
     def test_clock_and_positive_slot_types_are_strict(self):

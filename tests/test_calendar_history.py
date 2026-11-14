@@ -55,7 +55,7 @@ class CalendarHistoryTests(unittest.TestCase):
             self.assertEqual(graph, windows.window_iri('2026-10'))
             requested = set(re.findall(r'<(urn:shuttle:run:[^>]+)>', text))
             events = {r['ev'] for r in f.facts.values()
-                      if r['p'] == export.AEGIS+'inRun' and r['value'] in requested}
+                      if r['p'] == export.vocabulary.term('inRun') and r['value'] in requested}
             rows = [dict(r) for r in f.facts.values() if r['ev'] in events] + self.extra
         return {'rows': rows, 'count': len(rows), 'truncated': self.truncated}
 
@@ -95,7 +95,7 @@ class CalendarHistoryTests(unittest.TestCase):
                 del self.f.facts[key]
                 self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
         self.f.facts = dict(original)
-        key = next(k for k in original if k[1] == export.AEGIS+'signature')
+        key = next(k for k in original if k[1] == export.vocabulary.term('signature'))
         self.f.facts[key] = dict(original[key], value='0'*128)
         self.assertEqual(self.measure()['verdict'], 'UNKNOWN')
         self.f.facts = original

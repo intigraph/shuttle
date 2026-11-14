@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import json
 import re
 
-from . import export, quipu_client, signing, windows
+from . import export, quipu_client, signing, windows, vocabulary
 from .scheduled import ScheduledRefused, _FIELDS, _RDF, _XSD, _iri, _rows
 
 
@@ -76,16 +76,16 @@ class ScheduledHistory:
 
     def _event(self, rows, run, seq, step, old, new):
         event = export.event_iri(run, seq)
+        rows = [vocabulary.normalize_fact(row) for row in rows]
         values = {row['p']: row['value'] for row in rows}
-        a = export.AEGIS
-        at, signature = values.get(export.PROV+'endedAtTime'), values.get(a+'signature')
-        expected = [(_RDF+'type', a+'TransitionEvent', True),
-                    (a+'inRun', export.run_iri(run), True),
-                    (a+'atStep', self.binding['workflow']+'/step/'+step, True),
-                    (a+'fromState', old, False), (a+'toState', new, False),
+        at, signature = values.get(export.PROV+'endedAtTime'), values.get(vocabulary.term('signature'))
+        expected = [(_RDF+'type', vocabulary.term('TransitionEvent'), True),
+                    (vocabulary.term('inRun'), export.run_iri(run), True),
+                    (vocabulary.term('atStep'), self.binding['workflow']+'/step/'+step, True),
+                    (vocabulary.term('fromState'), old, False), (vocabulary.term('toState'), new, False),
                     (export.PROV+'endedAtTime', at, False),
-                    (a+'performedBy', self.namespace+'agent:'+self.binding['agent'], True),
-                    (a+'signature', signature, False), (a+'sourceKind', 'observed', False)]
+                    (vocabulary.term('performedBy'), self.namespace+'agent:'+self.binding['agent'], True),
+                    (vocabulary.term('signature'), signature, False), (vocabulary.term('sourceKind'), 'observed', False)]
         actual = set()
         for row in rows:
             if (set(row) - {'ev', 'p', 'value', 'iri', 'datatype'} or
@@ -106,6 +106,7 @@ class ScheduledHistory:
     def _outcome(self, rows, slot, now):
         if not rows:
             return 'MISSED'
+        rows = [vocabulary.normalize_fact(row) for row in rows]
         run = self._run(slot)
         start = [r for r in rows if r.get('ev') == export.event_iri(run, 2)]
         end = [r for r in rows if r.get('ev') == export.event_iri(run, 3)]
@@ -117,7 +118,7 @@ class ScheduledHistory:
         if not end:
             return 'MISSED'
         terminal = next((r.get('value') for r in end
-                         if r.get('p') == export.AEGIS+'toState'), None)
+                         if r.get('p') == vocabulary.term('toState')), None)
         if terminal not in ('succeeded', 'failed', 'skipped-by-hold'):
             raise ScheduledRefused('unknown signed terminal')
         ended = self._event(end, run, 3, terminal, 'running', terminal)
@@ -149,12 +150,13 @@ class ScheduledHistory:
                 raise ScheduledRefused('positive control must cover the same unambiguous month')
             if any(self.eligible(dict(self.binding), s) is not True for s in (positive_slot, slot)):
                 raise ScheduledRefused('current declaration eligibility unavailable')
-            a = export.AEGIS
             registration = _rows(self.query(
                 f'SELECT ?verifier ?pk ?workflow (isIRI(?workflow) AS ?scopeIRI) WHERE {{ '
-                f'<{self.registration}> a ?type ; <{a}verifier> ?verifier ; '
-                f'<{a}publicKey> ?pk ; <{a}attests> ?workflow . '
-                f'FILTER(?type = <{a}VerifierRegistration>) }} LIMIT 8',
+                f'<{self.registration}> a ?type . '
+                f'{vocabulary.pattern("<"+self.registration+">", "verifier", "?verifier")} '
+                f'{vocabulary.pattern("<"+self.registration+">", "publicKey", "?pk")} '
+                f'{vocabulary.pattern("<"+self.registration+">", "attests", "?workflow")} '
+                f'{vocabulary.type_filter("?type", "VerifierRegistration")} }} LIMIT 8',
                 graph=self.identity_graph), 8)
             if (len(registration) != 1 or registration[0].get('scopeIRI') is not True or
                     registration != [{'verifier': self.binding['agent'], 'pk': self.public_key,
@@ -167,7 +169,7 @@ class ScheduledHistory:
                 '(STR(?raw) AS ?value) (isIRI(?raw) AS ?iri) '
                 '(STR(DATATYPE(?raw)) AS ?datatype) WHERE { VALUES ?run { '
                 + ' '.join('<'+iri+'>' for iri in iris) + ' } '
-                + f'?event <{a}inRun> ?run ; ?predicate ?raw }} LIMIT 64',
+                + f'{vocabulary.pattern("?event", "inRun", "?run")} ?event ?predicate ?raw }} LIMIT 64',
                 graph=windows.window_iri(month)), 64)
             grouped = [[r for r in rows if r.get('ev') in
                         (export.event_iri(run, 2), export.event_iri(run, 3))] for run in runs]

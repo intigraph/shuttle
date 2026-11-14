@@ -67,12 +67,13 @@ class ScheduledPortTests(unittest.TestCase):
             return {'members': []}
         if path == '/knot' and 'TransitionEvent' in body['turtle']:
             text = body['turtle']
-            ev = re.search(r'<([^>]+)> a aegis:TransitionEvent', text).group(1)
-            facts = [(export.AEGIS+'TransitionEvent', 'type', True, _RDF())]
-            for predicate, value in re.findall(r'    ((?:aegis|prov):\w+) (<[^>]+>|"[^"]*") [;.]', text):
+            ev = re.search(r'<([^>]+)> a qp:TransitionEvent', text).group(1)
+            prefixes = dict(re.findall(r'@prefix (\w+): <([^>]+)>', text))
+            facts = [(export.vocabulary.term('TransitionEvent'), 'type', True, _RDF())]
+            for predicate, value in re.findall(r'    ((?:core|prov):\w+) (<[^>]+>|"[^"]*") [;.]', text):
                 prefix, name = predicate.split(':')
                 facts.append((value[1:-1], name, value.startswith('<'),
-                              export.AEGIS if prefix == 'aegis' else export.PROV))
+                              prefixes[prefix]))
             for value, predicate, iri, prefix in facts:
                 self.facts[(ev, prefix+predicate)] = {
                     'ev': ev, 'p': prefix+predicate, 'value': value, 'iri': iri,

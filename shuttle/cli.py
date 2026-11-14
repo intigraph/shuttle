@@ -245,12 +245,13 @@ def cmd_verify(args) -> int:
     defs, runs = _index()
     _, run, _ = _run_state(defs, runs, args.run)
     r = export_mod.run_iri(args.run)
-    a = export_mod.AEGIS
+    v = export_mod.vocabulary
     rows = qc.query(
         f"SELECT ?ev ?step ?from ?to ?at ?agent ?sig WHERE {{ "
-        f"?ev <{a}inRun> <{r}> ; <{a}atStep> ?step ; <{a}fromState> ?from ; "
-        f"<{a}toState> ?to ; <{export_mod.PROV}endedAtTime> ?at ; "
-        f"<{a}performedBy> ?agent ; <{a}signature> ?sig . }}",
+        f"{v.pattern('?ev', 'inRun', '<'+r+'>')} {v.pattern('?ev', 'atStep', '?step')} "
+        f"{v.pattern('?ev', 'fromState', '?from')} {v.pattern('?ev', 'toState', '?to')} "
+        f"?ev <{export_mod.PROV}endedAtTime> ?at . "
+        f"{v.pattern('?ev', 'performedBy', '?agent')} {v.pattern('?ev', 'signature', '?sig')} }}",
         graph=windows.window_iri(run["window"]),
     ).get("rows", [])
     if not rows:
@@ -259,8 +260,9 @@ def cmd_verify(args) -> int:
             f"{run['window']} — export first, or the window moved"
         )
     regs = qc.query(
-        f"SELECT ?verifier ?pk WHERE {{ ?reg a <{a}VerifierRegistration> ; "
-        f"<{a}verifier> ?verifier ; <{a}publicKey> ?pk . }}",
+        f"SELECT ?verifier ?pk WHERE {{ ?reg a ?registrationType . "
+        f"{v.pattern('?reg', 'verifier', '?verifier')} {v.pattern('?reg', 'publicKey', '?pk')} "
+        f"{v.type_filter('?registrationType', 'VerifierRegistration')} }}",
         graph=args.identity_graph,
     ).get("rows", [])
     keys = {row["verifier"]: row["pk"] for row in regs}
