@@ -6,6 +6,13 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.9.1](https://github.com/intigraph/shuttle/compare/v0.9.0...v0.9.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* **vocabulary:** write published terms and read historical workflow facts ([#37](https://github.com/intigraph/shuttle/issues/37)) ([03032ea](https://github.com/intigraph/shuttle/commit/03032ea86c32219e5781db8ec4fce9b7ed4be5c8))
+
 ## [0.9.0](https://github.com/intigraph/shuttle/compare/v0.8.1...v0.9.0) (2026-11-13)
 
 
