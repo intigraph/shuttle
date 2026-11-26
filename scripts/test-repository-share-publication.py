@@ -79,6 +79,7 @@ class Publication(unittest.TestCase):
             publisher.check_share(self.stage)
 
     def test_text_line_span_and_private_members_refuse(self):
+        # former-namespace (aegis-3r1): unowned-vocabulary fixture.
         for predicate in ("content", "startLine", "endLine"):
             (self.stage / "export.nt").write_text(
                 "<https://example.org/s> <http://aegis.gastown.local/ontology/" + predicate + '> "body" .\n'

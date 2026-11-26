@@ -18,6 +18,11 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 # thing gets the same public IRI in every pendant. Predicates and classes are
 # vocabulary and are left alone; so are the review-pinned publication-policy
 # rule IRIs that the receiver verifier checks by name.
+# former-namespace (aegis-3r1): the aegis: prefix is unowned-vocabulary (the
+# stack-wide pendant predicates/classes; no w3id owner is published, and the
+# shipped shapes validate these names). Every other old-namespace string below
+# is an alias: a producer-store entity name selected, renamed, and kept
+# resolvable through owl:sameAs. Neither may be renamed in this repo alone.
 CONSTRUCT { ?publicSubject ?p ?publicObject . ?publicSubject owl:sameAs ?formerSubject }
 WHERE {
 { SELECT ?s ?p ?o WHERE {

@@ -8,6 +8,13 @@ from pathlib import Path
 import re
 from urllib.parse import quote
 
+# former-namespace (aegis-3r1): A names two things, both kept deliberately.
+#   alias      - subjects are the producer index's existing pointer identities
+#                (doc|code/shuttle/...); the release query republishes them under
+#                https://w3id.org/intigraph/shuttle/id/ with owl:sameAs back here.
+#   unowned-vocabulary - the stack-wide repository-pendant predicates/classes
+#                Bobbin emits and every shipped share shape validates. No w3id
+#                owner is published for them; renaming here alone breaks the shapes.
 A = "http://aegis.gastown.local/ontology/"
 RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 RDFS = "http://www.w3.org/2000/01/rdf-schema#"
