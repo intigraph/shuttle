@@ -71,6 +71,8 @@ def check_share(stage):
     # This repository pack is pointer-only. Curated idea summaries use
     # rdfs:comment; source bodies and line spans are never release predicates.
     export = (stage / "export.nt").read_text()
+    # former-namespace (aegis-3r1): unowned-vocabulary - the producer's own
+    # source-text predicates; refusing them by their only published name.
     for predicate in ("content", "startLine", "endLine"):
         if "<http://aegis.gastown.local/ontology/" + predicate + ">" in export:
             raise ValueError("share duplicates source text or line-span data")

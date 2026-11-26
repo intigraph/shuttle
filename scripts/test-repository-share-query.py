@@ -10,6 +10,8 @@ import tempfile
 import unittest
 from rdflib import Dataset, Graph, Literal, Namespace, RDF, RDFS, URIRef
 
+# former-namespace (aegis-3r1): fixture of the producer store's names (alias
+# identities plus unowned pendant vocabulary) that the release query reads.
 A = Namespace("http://aegis.gastown.local/ontology/")
 CODE = Namespace(str(A) + "code/shuttle/")
 DOC = Namespace(str(A) + "doc/shuttle/")
@@ -99,6 +101,25 @@ class RepositoryQuery(unittest.TestCase):
             source.add(triple)
         source.add((pointer, OWL.sameAs, other))
         self.assertEqual(set(source.query(QUERY).graph), published(expected))
+
+    def test_old_namespace_leaves_only_as_vocabulary_or_labelled_former_name(self):
+        """aegis-3r1: no old-namespace entity identity escapes unrenamed."""
+        source = Graph()
+        doc = DOC["README.md"]
+        source.add((doc, RDF.type, A.Document))
+        source.add((doc, A.filePath, Literal("README.md")))
+        source.add((doc, A.depends_on, URIRef(str(A) + "repo_quipu")))
+        source.add((URIRef(str(A) + "chunk/shuttle/README.md#C1"), A.inDocument, doc))
+        out = set(source.query(QUERY).graph)
+        aliases = 0
+        for s, p, o in out:
+            self.assertFalse(str(s).startswith(str(A)), s)
+            if p == OWL_NS.sameAs:
+                aliases += 1
+                continue
+            if isinstance(o, URIRef) and str(o).startswith(str(A)):
+                self.assertEqual(p, RDF.type, (s, p, o))
+        self.assertEqual(aliases, 2)
 
     def test_empty_is_empty_with_populated_positive(self):
         self.assertEqual(len(Graph().query(QUERY).graph), 0)

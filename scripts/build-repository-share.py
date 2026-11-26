@@ -275,6 +275,8 @@ def verify_carried_alignments(stage, alignments):
         raise ValueError("native share did not carry the reviewed alignments")
 
 
+# former-namespace (aegis-3r1): alias - the exact pre-w3id entity names the
+# release query links with owl:sameAs so older pendants keep resolving.
 FORMER_NAME_LEGACY = "http://aegis.gastown.local/ontology/"
 
 
@@ -459,6 +461,8 @@ batch_size = 64
     ):
         raise ValueError("repository receiver did not admit a non-stub corpus")
     run([binary, "import", "promote", imported["share_id"], "--db", receiver])
+    # former-namespace (aegis-3r1): unowned-vocabulary - filePath is the
+    # pendant predicate the export carries; see build-repository-knowledge.py.
     positive = run(
         [
             binary,
