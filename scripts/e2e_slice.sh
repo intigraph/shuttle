@@ -69,7 +69,9 @@ say "export into the window"
 python3 -m shuttle.cli export
 
 WINDOW="https://camayoc.local/window/shuttle/runs/2026-08"
-SPARQL='SELECT ?ev ?sig WHERE { ?ev <http://aegis.gastown.local/ontology/inRun> <urn:shuttle:run:run-e2e> ; <http://aegis.gastown.local/ontology/signature> ?sig }'
+# Readers accept the published terms AND the former-name (legacy) aliases
+# during the vocabulary transition; the pattern comes from shuttle itself.
+SPARQL=$(python3 -c 'from shuttle import vocabulary as v; print("SELECT ?ev ?sig WHERE { " + v.pattern("?ev", "inRun", "<urn:shuttle:run:run-e2e>") + " " + v.pattern("?ev", "signature", "?sig") + " }")')
 
 say "the window holds 3 signed transitions"
 HOT=$(query "{\"query\": \"$SPARQL\", \"graph\": \"$WINDOW\"}")
