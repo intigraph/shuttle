@@ -32,6 +32,7 @@ until the job's deadline. It never buys a crew key — the broker holds none
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 import secrets
 import threading
@@ -144,6 +145,10 @@ class Broker:
         now = self._clock()
         if type(expires_at) not in (int, float):
             raise BrokerError("create needs 'expires_at' (epoch seconds: the job deadline)")
+        if not math.isfinite(expires_at):
+            # NaN compares False both ways: it would pass every bound below
+            # and give a key that never expires and is never reaped.
+            raise BrokerError(f"expires_at {expires_at!r} is not a finite epoch time")
         if expires_at <= now:
             raise BrokerError(f"expires_at {utc_iso(expires_at)} is not in the future")
         if expires_at - now > self._max_ttl:
@@ -155,6 +160,19 @@ class Broker:
             encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
         ).hex()
         token = secrets.token_urlsafe(32)
+        # Build the whole reply BEFORE the key is stored: a reply that fails
+        # after insertion would lose the token and strand the key in memory.
+        reply = {
+            "token": token,
+            "agent": agent,
+            "public_key": pub,
+            "run_iri": run_iri,
+            "expires_at": utc_iso(expires_at),
+            "registration": {
+                "verifier": agent, "publicKey": pub, "attests": run_iri,
+                "spawnedBy": spawner, "item": item, "job": job,
+            },
+        }
         with self._lock:
             self._reap_locked()
             if agent in self._issued:
@@ -174,17 +192,7 @@ class Broker:
                 agent=agent, job=job, item=item, spawner=spawner, run_iri=run_iri,
                 definition=defn, allowed_steps=allowed, expires_at=float(expires_at),
                 state=state, signer=key, public_key=pub)
-        return {
-            "token": token,
-            "agent": agent,
-            "public_key": pub,
-            "run_iri": run_iri,
-            "expires_at": utc_iso(expires_at),
-            "registration": {
-                "verifier": agent, "publicKey": pub, "attests": run_iri,
-                "spawnedBy": spawner, "item": item, "job": job,
-            },
-        }
+        return reply
 
     # -- sign -----------------------------------------------------------
     def sign(self, token: str, step: str) -> dict:
@@ -212,6 +220,8 @@ class Broker:
             cap.signed.append(signed)
             if to_state in cap.definition.terminal:
                 # A finished run needs no key; holding it is only exposure.
+                # The Capability itself (no key) stays, holding one max_live
+                # slot, until destroy or expiry: st destroys at teardown.
                 cap.signer = None
             return signed
 

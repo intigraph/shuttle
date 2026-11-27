@@ -31,8 +31,10 @@ supersedes decision 3 of 2026-09-12 for broker-held keys only.
 `sign` refuses a step outside `allowed_steps`, a step not legal from the
 run's current state (the broker owns the state and the clock, so a token
 cannot skip, replay or backdate), an expired capability, and a terminal run.
-Expiry and reaching a terminal state both drop the key. Signatures are the
-unchanged `shuttle-transition-v1` message, so `signing.verify_transition`
+Expiry and reaching a terminal state both drop the key. A terminal run keeps
+its keyless capability (one `max_live` slot) until `destroy` or expiry, so st
+destroys at teardown. A non-finite `expires_at` (NaN, Infinity) is refused,
+both by the request parser and by `create`. Signatures are the unchanged `shuttle-transition-v1` message, so `signing.verify_transition`
 checks them against the registered public key.
 
 The broker mints only `eph-task-*` identities and never re-keys a name it

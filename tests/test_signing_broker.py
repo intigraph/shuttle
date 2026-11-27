@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -142,7 +143,8 @@ class BrokerCore(unittest.TestCase):
     def test_bad_expiry_refused(self):
         for exp, msg in ((self.clock.t - 1, "not in the future"),
                          (self.clock.t + 10 * 86400, "max lifetime"),
-                         ("soon", "expires_at")):
+                         ("soon", "expires_at"),
+                         (float("nan"), "finite"), (float("inf"), "finite")):
             with self.assertRaisesRegex(BrokerError, msg):
                 self.b.create(create_req(self.clock.t, agent="eph-task-e", expires_at=exp))
 
@@ -174,6 +176,22 @@ class Handler(unittest.TestCase):
                       json.dumps({"op": "create", **create_req(time.time(), definition=bad)}).encode())
         self.assertFalse(resp["ok"])
         self.assertTrue(resp["error"])
+
+
+    def test_non_finite_expiry_refused_at_the_wire(self):
+        from shuttle.broker_server import handle
+        b = Broker()
+        good = json.dumps({"op": "create", **create_req(time.time())})
+        for const in ("NaN", "Infinity", "-Infinity"):
+            line = re.sub(r'"expires_at": [0-9.e+]+', f'"expires_at": {const}', good)
+            self.assertIn(const, line)
+            resp = handle(b, frozenset({7}), 7, line.encode())
+            self.assertFalse(resp["ok"], const)
+            self.assertEqual(b.live_count(), 0, const)
+        # The same request with a real deadline still mints: the agent name
+        # was not burned by the refused attempts.
+        self.assertTrue(handle(b, frozenset({7}), 7, good.encode())["ok"])
+        self.assertEqual(b.live_count(), 1)
 
 
 class BrokerProcess(unittest.TestCase):

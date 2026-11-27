@@ -68,9 +68,14 @@ def peer_uid(sock: socket.socket) -> int:
     return uid
 
 
+def _refuse_constant(name: str):
+    # NaN / Infinity / -Infinity are not JSON; Python accepts them by default.
+    raise ValueError(f"non-standard JSON constant {name}")
+
+
 def handle(broker: Broker, admin_uids: frozenset[int], uid: int, raw: bytes) -> dict:
     try:
-        req = json.loads(raw)
+        req = json.loads(raw, parse_constant=_refuse_constant)
     except (ValueError, UnicodeDecodeError):
         return {"ok": False, "error": "request is not one JSON object"}
     if not isinstance(req, dict):
