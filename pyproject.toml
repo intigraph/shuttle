@@ -12,6 +12,7 @@ dependencies = ["cryptography>=41"]
 
 [project.scripts]
 shuttle = "shuttle.cli:main"
+shuttle-signer = "shuttle.broker_server:main"
 
 [build-system]
 requires = ["setuptools>=68"]

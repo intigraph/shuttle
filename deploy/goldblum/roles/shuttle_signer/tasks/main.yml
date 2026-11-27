@@ -1,0 +1,53 @@
+---
+- name: shuttle-signer system user (no home, no shell, no login)
+  ansible.builtin.user:
+    name: "{{ shuttle_signer_user }}"
+    system: true
+    create_home: false
+    home: /nonexistent
+    shell: /usr/sbin/nologin
+
+- name: socket clients join the broker group (connect only; it owns no files)
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: "{{ shuttle_signer_user }}"
+    append: true
+  loop: "{{ shuttle_signer_clients }}"
+
+- name: admin uid lookup
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ shuttle_signer_admin_user }}"
+
+- name: config dir
+  ansible.builtin.file:
+    path: /etc/shuttle-signer
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: environment
+  ansible.builtin.copy:
+    dest: /etc/shuttle-signer/env
+    content: "SHUTTLE_SIGNER_ADMIN_UID={{ getent_passwd[shuttle_signer_admin_user][1] }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart shuttle-signer
+
+- name: unit
+  ansible.builtin.template:
+    src: shuttle-signer.service.j2
+    dest: /etc/systemd/system/shuttle-signer.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart shuttle-signer
+
+- name: enabled and running
+  ansible.builtin.systemd:
+    name: shuttle-signer
+    enabled: true
+    state: started
+    daemon_reload: true
