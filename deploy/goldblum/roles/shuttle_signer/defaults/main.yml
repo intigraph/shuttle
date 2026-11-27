@@ -1,0 +1,9 @@
+---
+# Draft role for scbrown/goldblum (aegis-za4f.19.2). Copy to
+# ansible/roles/shuttle_signer; the apply is separate and admitted.
+shuttle_signer_user: shuttle-signer
+shuttle_signer_bin: /usr/bin/shuttle-signer
+# The uid admitted to create/destroy capabilities: st's (braino today).
+shuttle_signer_admin_user: braino
+# Users allowed to connect to the socket (jobs sign through it).
+shuttle_signer_clients: [braino]

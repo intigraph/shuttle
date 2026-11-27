@@ -1,0 +1,40 @@
+# shuttle signing broker (aegis-za4f.19.2, ruling B). Its own system uid: the
+# per-job keys live only in this process's memory, which uid braino can
+# neither ptrace nor read (/proc/<pid>/mem is root-owned: PR_SET_DUMPABLE=0).
+# Deployed by goldblum role shuttle_signer; this file is the reference copy.
+[Unit]
+Description=shuttle signing broker (per-run capabilities over in-memory job keys)
+After=network.target
+
+[Service]
+Type=simple
+User=shuttle-signer
+Group=shuttle-signer
+EnvironmentFile=/etc/shuttle-signer/env
+ExecStart={{ shuttle_signer_bin }} serve --socket /run/shuttle-signer/signer.sock --admin-uid ${SHUTTLE_SIGNER_ADMIN_UID} --mode 0660
+# 0750 dir + 0660 socket: only members of group shuttle-signer (braino) connect.
+RuntimeDirectory=shuttle-signer
+RuntimeDirectoryMode=0750
+# No state directory on purpose: a restart destroys every key (jobs re-spawn).
+Restart=on-failure
+LimitCORE=0
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectProc=invisible
+ProcSubset=pid
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+IPAddressDeny=any
+
+[Install]
+WantedBy=multi-user.target
