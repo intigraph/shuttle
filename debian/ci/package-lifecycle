@@ -53,13 +53,14 @@ check_installed() {
     owned_files > "$work/owned-files"
     while IFS= read -r path; do
         case "$path" in
-            /usr/bin/shuttle|/usr/lib/python3/dist-packages/shuttle/*|/usr/lib/python3/dist-packages/shuttle-*.dist-info/*|/usr/share/doc/shuttle/*|/usr/share/man/man1/shuttle.1.gz) ;;
+            /usr/bin/shuttle|/usr/bin/shuttle-signer|/usr/lib/python3/dist-packages/shuttle/*|/usr/lib/python3/dist-packages/shuttle-*.dist-info/*|/usr/share/doc/shuttle/*|/usr/share/man/man1/shuttle.1.gz) ;;
             *) echo "unexpected package-owned file: $path" >&2; exit 1 ;;
         esac
         dpkg-query -S "$path" | grep -F "shuttle: $path" >/dev/null
     done < "$work/owned-files"
     package_op "$installed_stage-help" /usr/bin/shuttle --help >/dev/null
     package_op "$installed_stage-version" /usr/bin/shuttle --version
+    package_op "$installed_stage-signer-help" /usr/bin/shuttle-signer --help >/dev/null
 }
 
 check_removed() {
