@@ -146,6 +146,35 @@ class BrokerCore(unittest.TestCase):
                 self.b.create(create_req(self.clock.t, agent="eph-task-e", expires_at=exp))
 
 
+class Limits(unittest.TestCase):
+    def setUp(self):
+        self.clock = Clock()
+
+    def test_live_capabilities_are_capped(self):
+        b = Broker(clock=self.clock, max_live=2)
+        for n in range(2):
+            b.create(create_req(self.clock.t, agent=f"eph-task-l{n}"))
+        with self.assertRaisesRegex(BrokerError, "live capabilities"):
+            b.create(create_req(self.clock.t, agent="eph-task-l2"))
+        self.assertEqual(b.live_count(), 2)
+
+    def test_issued_identities_are_capped(self):
+        b = Broker(clock=self.clock, max_issued=1)
+        b.destroy(b.create(create_req(self.clock.t, agent="eph-task-i0"))["token"])
+        with self.assertRaisesRegex(BrokerError, "issued"):
+            b.create(create_req(self.clock.t, agent="eph-task-i1"))
+
+
+class Handler(unittest.TestCase):
+    def test_malformed_create_gets_a_refusal_not_silence(self):
+        from shuttle.broker_server import handle
+        bad = dict(TASK_WORKFLOW, terminal=[["unhashable"]])
+        resp = handle(Broker(), frozenset({7}), 7,
+                      json.dumps({"op": "create", **create_req(time.time(), definition=bad)}).encode())
+        self.assertFalse(resp["ok"])
+        self.assertTrue(resp["error"])
+
+
 class BrokerProcess(unittest.TestCase):
     """A live `shuttle-signer serve`, probed from this (the client's) uid."""
 
@@ -190,6 +219,7 @@ class BrokerProcess(unittest.TestCase):
             self.assertFalse(resp["ok"])
             self.assertIn("admin operation", resp["error"])
 
+    @unittest.skipIf(os.geteuid() == 0, "root reads any process; the control must run as braino")
     def test_negative_control_caller_cannot_read_key_material(self):
         proc, sock, home = self.start(os.getuid())
         cap = call({"op": "create", **create_req(time.time())}, sock)

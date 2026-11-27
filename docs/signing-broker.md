@@ -14,7 +14,7 @@ supersedes decision 3 of 2026-09-12 for broker-held keys only.
   kernel will not: `/proc/<pid>/{mem,environ,fd}` become root-owned and no
   core is written, even to a same-uid reader.
 - Deployed as its own system user `shuttle-signer`
-  (`deploy/systemd/shuttle-signer.service`, goldblum role draft in
+  (goldblum role draft, the single unit template, in
   `deploy/goldblum/roles/shuttle_signer`). Socket
   `/run/shuttle-signer/signer.sock`, 0660 in a 0750 dir; clients join group
   `shuttle-signer`.

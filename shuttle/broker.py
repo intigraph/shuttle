@@ -48,6 +48,12 @@ from . import model, signing
 # a token can never be minted into a signature that claims to be crew.
 AGENT_PATTERN = re.compile(r"^eph-task-[a-z0-9][a-z0-9-]{0,62}$")
 DEFAULT_MAX_TTL = 24 * 3600
+# Any admitted caller can create, so live capabilities (each a key in
+# memory) are capped; past the cap a create is refused, never queued.
+DEFAULT_MAX_LIVE = 256
+# Issued names are kept for the no-re-key rule; cap them too, so create spam
+# cannot grow memory without bound. Past it the broker refuses until restart.
+DEFAULT_MAX_ISSUED = 65536
 
 
 class BrokerError(RuntimeError):
@@ -90,9 +96,12 @@ def _text(raw: dict, name: str) -> str:
 class Broker:
     """Capabilities and their keys, in memory. Thread-safe."""
 
-    def __init__(self, *, clock=time.time, max_ttl: float = DEFAULT_MAX_TTL):
+    def __init__(self, *, clock=time.time, max_ttl: float = DEFAULT_MAX_TTL,
+                 max_live: int = DEFAULT_MAX_LIVE, max_issued: int = DEFAULT_MAX_ISSUED):
         self._clock = clock
         self._max_ttl = max_ttl
+        self._max_live = max_live
+        self._max_issued = max_issued
         self._caps: dict[str, Capability] = {}
         self._issued: set[str] = set()
         self._lock = threading.Lock()
@@ -152,6 +161,14 @@ class Broker:
                 raise BrokerError(
                     f"agent {agent!r} was already issued a key by this broker; "
                     f"an identity is never re-keyed")
+            if len(self._caps) >= self._max_live:
+                raise BrokerError(
+                    f"broker holds {len(self._caps)} live capabilities (max "
+                    f"{self._max_live}); destroy finished runs before creating more")
+            if len(self._issued) >= self._max_issued:
+                raise BrokerError(
+                    f"broker has issued {len(self._issued)} identities (max "
+                    f"{self._max_issued}); restart it to admit more")
             self._issued.add(agent)
             self._caps[_digest(token)] = Capability(
                 agent=agent, job=job, item=item, spawner=spawner, run_iri=run_iri,

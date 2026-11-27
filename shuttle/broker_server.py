@@ -12,7 +12,7 @@ Custody, in the order a reader would attack it:
     root-owned and no core is written, even to a same-uid reader;
   - in deployment the process runs as its own system user (shuttle-signer),
     so braino cannot ptrace it or signal it either
-    (deploy/systemd/shuttle-signer.service);
+    (deploy/goldblum/roles/shuttle_signer/templates/shuttle-signer.service.j2);
   - the socket is created 0660 under a 0750 runtime dir; group membership
     is what admits a client.
 
@@ -36,7 +36,7 @@ import sys
 import threading
 from pathlib import Path
 
-from .broker import Broker, BrokerError
+from .broker import DEFAULT_MAX_LIVE, Broker, BrokerError
 
 MAX_REQUEST = 256 * 1024
 PR_SET_DUMPABLE = 4
@@ -82,6 +82,8 @@ def handle(broker: Broker, admin_uids: frozenset[int], uid: int, raw: bytes) -> 
             return {"ok": True, "live": broker.live_count()}
     except BrokerError as exc:
         return {"ok": False, "error": str(exc)}
+    except Exception as exc:  # noqa: BLE001 - a malformed request still gets a reply
+        return {"ok": False, "error": f"request refused: {type(exc).__name__}: {exc}"}
     return {"ok": False, "error": f"unknown op {op!r}. Legal: create, sign, destroy, ping"}
 
 
@@ -149,6 +151,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="uid admitted to create/destroy (repeatable; none = no admin)")
     s.add_argument("--mode", type=lambda v: int(v, 8), default=0o660)
     s.add_argument("--max-ttl", type=float, default=None)
+    s.add_argument("--max-live", type=int, default=None,
+                   help="most live capabilities at once (default %d)" % DEFAULT_MAX_LIVE)
     c = sub.add_parser("call", help="send one JSON request read from stdin")
     c.add_argument("--socket", type=Path, default=None)
     args = p.parse_args(argv)
@@ -159,7 +163,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if resp.get("ok") else 1
 
     make_undumpable()
-    broker = Broker(**({"max_ttl": args.max_ttl} if args.max_ttl else {}))
+    opts = {"max_ttl": args.max_ttl, "max_live": args.max_live}
+    broker = Broker(**{k: v for k, v in opts.items() if v})
     path = args.socket or default_socket()
     with SignerServer(path, broker, args.admin_uid, args.mode) as srv:
         print(f"shuttle-signer: serving on {path}", file=sys.stderr, flush=True)
