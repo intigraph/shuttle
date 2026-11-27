@@ -49,3 +49,14 @@ uid for st closes it. Crew keys moving into the broker is slice S4.
 
 `scripts/signer-negative-control.sh`, run as braino: every probe of the
 broker's memory, environment, fds and files must be refused.
+
+## Connection bounds
+
+Each connection gets 5 seconds in total to deliver its one request line. An
+idle or trickling client is answered `no request within 5.0s` and dropped.
+At most `--max-connections` (default 64) are served at once. Past that, a
+connection is answered `broker busy; retry` and closed, so it never holds a
+thread. Residual: a client in group shuttle-signer that keeps the cap full
+can delay every run's signing by up to one deadline per refill. It cannot
+read or forge anything. `--max-ttl`, `--max-live` and `--max-connections`
+refuse values <= 0 rather than silently falling back to the default.

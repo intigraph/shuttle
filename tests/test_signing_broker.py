@@ -17,6 +17,7 @@ import sys
 import tempfile
 import time
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from shuttle import signing
@@ -187,6 +188,7 @@ class BrokerProcess(unittest.TestCase):
         args = [sys.executable, "-m", "shuttle.broker_server", "serve", "--socket", str(sock)]
         for uid in admin:
             args += ["--admin-uid", str(uid)]
+        args += getattr(self, "_extra", [])
         env = {**os.environ, "HOME": str(home), "PYTHONPATH": str(REPO),
                "BROKER_CANARY": "secret-in-env"}
         proc = subprocess.Popen(args, cwd=home, env=env, stderr=subprocess.PIPE)
@@ -240,6 +242,64 @@ class BrokerProcess(unittest.TestCase):
         # The token buys a signature, never the key: no response carries it.
         signed = call({"op": "sign", "token": cap["token"], "step": "claim"}, sock)
         self.assertNotIn("private", json.dumps(signed).lower())
+
+
+class ConnectionBounds(BrokerProcess):
+    """An idle client cannot hold a handler, and past the cap a connection is
+    answered "busy" instead of queuing a thread."""
+
+    def start(self, *admin, extra=()):
+        self._extra = list(extra)
+        return super().start(*admin)
+
+    def test_idle_connection_is_dropped_at_the_deadline(self):
+        import socket
+        _proc, sock, _home = self.start(os.getuid())
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as idle:
+            idle.settimeout(15)
+            idle.connect(str(sock))
+            t0 = time.monotonic()
+            resp = json.loads(idle.makefile("rb").readline())
+            self.assertLess(time.monotonic() - t0, 12)
+        self.assertFalse(resp["ok"])
+        self.assertIn("no request within", resp["error"])
+        self.assertTrue(call({"op": "ping"}, sock)["ok"])
+
+    def test_connections_past_the_cap_are_refused_busy(self):
+        import socket
+        _proc, sock, _home = self.start(os.getuid(), extra=["--max-connections", "2"])
+        held = []
+        for _ in range(2):
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.addCleanup(s.close)
+            s.connect(str(sock))
+            held.append(s)
+        time.sleep(0.3)
+        resp = call({"op": "ping"}, sock)
+        self.assertFalse(resp["ok"])
+        self.assertIn("busy", resp["error"])
+        for s in held:
+            s.close()
+        for _ in range(100):
+            resp = call({"op": "ping"}, sock)
+            if resp["ok"]:
+                break
+            time.sleep(0.05)
+        self.assertTrue(resp["ok"], resp)
+
+    test_round_trip_and_admin_gate = None
+    test_non_admin_uid_cannot_create_or_destroy = None
+    test_negative_control_caller_cannot_read_key_material = None
+
+
+class Flags(unittest.TestCase):
+    def test_zero_limits_are_refused_not_dropped(self):
+        from shuttle.broker_server import main
+        for flag in ("--max-ttl", "--max-live", "--max-connections"):
+            with self.assertRaises(SystemExit) as ctx, \
+                    unittest.mock.patch("sys.stderr"):
+                main(["serve", flag, "0"])
+            self.assertEqual(ctx.exception.code, 2, flag)
 
 
 if __name__ == "__main__":

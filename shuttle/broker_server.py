@@ -34,6 +34,7 @@ import socketserver
 import struct
 import sys
 import threading
+import time
 from pathlib import Path
 
 from .broker import DEFAULT_MAX_LIVE, Broker, BrokerError
@@ -41,6 +42,12 @@ from .broker import DEFAULT_MAX_LIVE, Broker, BrokerError
 MAX_REQUEST = 256 * 1024
 PR_SET_DUMPABLE = 4
 ADMIN_OPS = {"create", "destroy"}
+# A connection gets this long, in total, to deliver its one request line; an
+# idle or trickling client cannot hold a handler thread past it.
+REQUEST_DEADLINE = 5.0
+# Most connections served at once. Past it a connection is answered "busy"
+# and closed, so idle clients cannot exhaust threads or fds.
+DEFAULT_MAX_CONNECTIONS = 64
 
 
 def default_socket() -> Path:
@@ -87,23 +94,53 @@ def handle(broker: Broker, admin_uids: frozenset[int], uid: int, raw: bytes) -> 
     return {"ok": False, "error": f"unknown op {op!r}. Legal: create, sign, destroy, ping"}
 
 
-class _Handler(socketserver.StreamRequestHandler):
+def read_request(conn: socket.socket, deadline: float) -> bytes | None:
+    """Read one newline-terminated request, or None if the total deadline
+    passes first. The deadline bounds the whole read, not each recv."""
+    buf = b""
+    end = time.monotonic() + deadline
+    while b"\n" not in buf and len(buf) <= MAX_REQUEST:
+        left = end - time.monotonic()
+        if left <= 0:
+            return None
+        conn.settimeout(left)
+        try:
+            chunk = conn.recv(65536)
+        except (TimeoutError, socket.timeout):
+            return None
+        if not chunk:
+            break
+        buf += chunk
+    return buf
+
+
+class _Handler(socketserver.BaseRequestHandler):
     def handle(self):
         srv = self.server
-        line = self.rfile.readline(MAX_REQUEST + 1)
-        if len(line) > MAX_REQUEST:
+        line = read_request(self.request, srv.request_deadline)
+        if line is None:
+            resp = {"ok": False, "error": f"no request within {srv.request_deadline}s"}
+        elif len(line) > MAX_REQUEST:
             resp = {"ok": False, "error": f"request exceeds {MAX_REQUEST} bytes"}
         else:
-            resp = handle(srv.broker, srv.admin_uids, peer_uid(self.connection), line)
-        self.wfile.write(json.dumps(resp).encode() + b"\n")
+            resp = handle(srv.broker, srv.admin_uids, peer_uid(self.request), line)
+        try:
+            self.request.settimeout(srv.request_deadline)
+            self.request.sendall(json.dumps(resp).encode() + b"\n")
+        except OSError:
+            pass  # the client went away or will not read; nothing is owed to it
 
 
 class SignerServer(socketserver.ThreadingUnixStreamServer):
     daemon_threads = True
 
-    def __init__(self, path: Path, broker: Broker, admin_uids, mode: int = 0o660):
+    def __init__(self, path: Path, broker: Broker, admin_uids, mode: int = 0o660, *,
+                 max_connections: int = DEFAULT_MAX_CONNECTIONS,
+                 request_deadline: float = REQUEST_DEADLINE):
         self.broker = broker
         self.admin_uids = frozenset(admin_uids)
+        self.request_deadline = request_deadline
+        self._slots = threading.BoundedSemaphore(max_connections)
         if path.exists() or path.is_symlink():
             if not path.is_socket():
                 raise OSError(f"{path} exists and is not a socket; refusing to replace it")
@@ -116,6 +153,27 @@ class SignerServer(socketserver.ThreadingUnixStreamServer):
         os.chmod(path, mode)
         self._stop = threading.Event()
         threading.Thread(target=self._reaper, daemon=True).start()
+
+    def process_request(self, request, client_address):
+        if not self._slots.acquire(blocking=False):
+            try:
+                request.setblocking(False)
+                request.send(b'{"ok": false, "error": "broker busy; retry"}\n')
+            except OSError:
+                pass
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self._slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._slots.release()
 
     def _reaper(self):
         while not self._stop.wait(5):
@@ -142,6 +200,16 @@ def call(request: dict, path: Path | None = None, timeout: float = 10.0) -> dict
     return json.loads(buf)
 
 
+def _positive(kind):
+    """An argparse type refusing values <= 0: a zero limit is never a default."""
+    def parse(v):
+        n = kind(v)
+        if n <= 0:
+            raise argparse.ArgumentTypeError(f"must be > 0, got {v!r}")
+        return n
+    return parse
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="shuttle-signer", description=__doc__.splitlines()[0])
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -150,9 +218,11 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--admin-uid", type=int, action="append", default=[],
                    help="uid admitted to create/destroy (repeatable; none = no admin)")
     s.add_argument("--mode", type=lambda v: int(v, 8), default=0o660)
-    s.add_argument("--max-ttl", type=float, default=None)
-    s.add_argument("--max-live", type=int, default=None,
+    s.add_argument("--max-ttl", type=_positive(float), default=None)
+    s.add_argument("--max-live", type=_positive(int), default=None,
                    help="most live capabilities at once (default %d)" % DEFAULT_MAX_LIVE)
+    s.add_argument("--max-connections", type=_positive(int), default=DEFAULT_MAX_CONNECTIONS,
+                   help="most connections served at once (default %d)" % DEFAULT_MAX_CONNECTIONS)
     c = sub.add_parser("call", help="send one JSON request read from stdin")
     c.add_argument("--socket", type=Path, default=None)
     args = p.parse_args(argv)
@@ -164,9 +234,10 @@ def main(argv: list[str] | None = None) -> int:
 
     make_undumpable()
     opts = {"max_ttl": args.max_ttl, "max_live": args.max_live}
-    broker = Broker(**{k: v for k, v in opts.items() if v})
+    broker = Broker(**{k: v for k, v in opts.items() if v is not None})
     path = args.socket or default_socket()
-    with SignerServer(path, broker, args.admin_uid, args.mode) as srv:
+    with SignerServer(path, broker, args.admin_uid, args.mode,
+                      max_connections=args.max_connections) as srv:
         print(f"shuttle-signer: serving on {path}", file=sys.stderr, flush=True)
         try:
             srv.serve_forever()
