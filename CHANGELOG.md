@@ -6,6 +6,19 @@ All notable changes to shuttle. The format follows
 section here; CI refuses a version with no section (see
 [Releasing](https://scbrown.github.io/shuttle/releasing.html)).
 
+## [0.10.0](https://github.com/intigraph/shuttle/compare/v0.9.1...v0.10.0) (2026-11-28)
+
+
+### Features
+
+* **broker:** shuttle-signer per-run capability signing broker (aegis-za4f.19.2) ([#45](https://github.com/intigraph/shuttle/issues/45)) ([8ba6777](https://github.com/intigraph/shuttle/commit/8ba6777d5ed936d5d1ee5d23a4e0cc4341fca608))
+
+
+### Bug Fixes
+
+* **share:** surface the failing tool's stderr when a publish command fails ([6164779](https://github.com/intigraph/shuttle/commit/61647797ae87472c75626955d4e0e99c9775da27))
+* **share:** surface the failing tool's stderr when a publish command fails ([5f185fd](https://github.com/intigraph/shuttle/commit/5f185fdb6c0c592305acc1dc078d5ef8dfe6843c))
+
 ## [0.9.1](https://github.com/intigraph/shuttle/compare/v0.9.0...v0.9.1) (2026-11-14)
 
 
