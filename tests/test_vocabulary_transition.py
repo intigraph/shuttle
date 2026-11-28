@@ -6,6 +6,7 @@ no vocabulary IRI is inside them, so moving predicates to the published
 w3id terms cannot invalidate an existing signature.
 """
 import unittest
+import json
 from unittest import mock
 
 from shuttle import cli, quipu_client as qc, signing, state, vocabulary
@@ -57,19 +58,25 @@ class VocabularyTransition(base.EnvIsolatedCase):
         reg_rows = [{"verifier": "agent-a", "pk": signing.public_key_hex("agent-a")}]
         queries = []
 
-        def fake_query(sparql, graph=None):
+        start = next(r for r in state.records() if r['type'] == 'start')
+
+        def fake_query(sparql, graph=None, **kwargs):
             queries.append(sparql)
-            return {"rows": event_rows if len(queries) == 1 else reg_rows}
+            if 'SELECT DISTINCT ?at' in sparql:
+                return {'rows': [{'at': start['at']}]}
+            if 'SELECT ?record' in sparql:
+                return {'rows': [{'record': json.dumps(start)}]}
+            return {"rows": reg_rows if '?verifier ?pk' in sparql else event_rows}
 
         with mock.patch.object(qc, "query", side_effect=fake_query):
             code, out = self.run_cli("verify", "r1")
         self.assertEqual(0, code, out)
         self.assertIn("all 1 exported transitions verify", out)
         for name in ("inRun", "signature", "performedBy"):
-            self.assertIn("<" + vocabulary.LEGACY + name + ">", queries[0])
-            self.assertIn("<" + vocabulary.term(name) + ">", queries[0])
-        self.assertIn("<" + vocabulary.LEGACY + "VerifierRegistration>", queries[1])
-        self.assertIn(run_iri, queries[0])
+            self.assertIn("<" + vocabulary.LEGACY + name + ">", queries[2])
+            self.assertIn("<" + vocabulary.term(name) + ">", queries[2])
+        self.assertIn("<" + vocabulary.LEGACY + "VerifierRegistration>", queries[3])
+        self.assertIn(run_iri, queries[2])
         # Control: the same legacy row with a tampered signature is refused.
         event_rows[0]["sig"] = ("00" if claim["signature"][:2] != "00" else "11") + claim["signature"][2:]
         queries.clear()

@@ -69,7 +69,7 @@ def extract(archive, destination):
             target.resolve(strict=True).relative_to(destination.resolve())
 
 
-CONFIG = {'kind': 'wheel', 'package': 'shuttle', 'assets': ['shuttle-{version}-py3-none-any.whl'], 'checksum': 'checksums.txt', 'commands': ['shuttle'], 'repo': 'shuttle'}
+CONFIG = {'kind': 'wheel', 'package': 'shuttle', 'assets': ['shuttle-{version}-py3-none-any.whl'], 'checksum': 'checksums.txt', 'commands': ['shuttle', 'shuttle-signer'], 'repo': 'shuttle'}
 
 
 def bundle_identity(root):

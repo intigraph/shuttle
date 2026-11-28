@@ -25,6 +25,7 @@ and the registration graph is not itself signed.
 from __future__ import annotations
 
 import os
+import json
 import stat
 
 from . import vocabulary
@@ -216,3 +217,30 @@ def registration_turtle(agent: str, workflow_iri: str, root: Path | None = None)
     core:attests   <{workflow_iri}> ;
     core:publicKey "{pk}" .
 """
+
+
+def start_message(rec: dict, run_iri: str) -> bytes:
+    """Domain-separated start attestation; transition-v1 stays unchanged.
+
+    This binds run identity, definition name, initial state, time and agent.
+    Definition content and evidence digest signing belong to a later protocol.
+    """
+    return ("shuttle-start-v1|" + json.dumps(
+        [run_iri, rec["definition"], rec["state"], rec["at"], rec["agent"]],
+        ensure_ascii=True, separators=(",", ":"),
+    )).encode()
+
+
+def sign_start(rec: dict, run_iri: str) -> str:
+    return load_or_generate(rec["agent"]).sign(start_message(rec, run_iri)).hex()
+
+
+def verify_start(pk: str, rec: dict, run_iri: str) -> bool:
+    try:
+        key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(pk))
+        key.verify(bytes.fromhex(rec["signature"]), start_message(rec, run_iri))
+        return True
+    except (ValueError, KeyError):
+        return False
+    except Exception:
+        return False

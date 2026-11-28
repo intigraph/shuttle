@@ -184,8 +184,11 @@ class ScheduledRunPort:
         at = datetime.fromtimestamp(now, timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         rec = self._transition(run, 'started', 'queued', 'running', at, windows.month_of(at))
         state.append(self._definition(at), root)
-        state.append({'type': 'start', 'run': run, 'definition': self.definition,
-                      'state': 'queued', 'agent': self.binding['agent'], 'at': at}, root)
+        start = {'type': 'start', 'run': run, 'definition': self.definition,
+                 'state': 'queued', 'agent': self.binding['agent'], 'at': at}
+        with signing.existing_keys_only():
+            start['signature'] = signing.sign_start(start, export.run_iri(run))
+        state.append(start, root)
         state.append(rec, root)
         self._sync(root)
 
@@ -194,9 +197,11 @@ class ScheduledRunPort:
         if len(recs) != count or recs[0] != self._definition(recs[0].get('at')):
             raise ScheduledRefused('unexpected local run history')
         start = recs[1]
-        if start != {'type': 'start', 'run': run, 'definition': self.definition,
+        if {k: val for k, val in start.items() if k != 'signature'} != {'type': 'start', 'run': run, 'definition': self.definition,
                      'state': 'queued', 'agent': self.binding['agent'], 'at': recs[2]['at']}:
-            raise ScheduledRefused('unsigned start does not match the signed start')
+            raise ScheduledRefused('start does not match the signed started transition')
+        if not signing.verify_start(self.public_key, start, export.run_iri(run)):
+            raise ScheduledRefused('run start signature does not verify')
         for rec in recs[2:]:
             if (rec.get('run') != run or rec.get('agent') != self.binding['agent'] or
                     rec.get('definition') != self.definition or
