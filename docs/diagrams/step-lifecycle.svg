@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 650" role="img" aria-label="One step, from offer to signed record. Six stages run left to right. Offer: the driver lists the steps that are legal from the run&#x27;s state. Bind inputs: the driver resolves each named input to entities in Quipu. Perform: the performer does the work the step asks for and writes its outputs. Check outputs: the driver tests each output against its contract, and only a pass advances. Sign: the performer&#x27;s key binds the step to its inputs, its outputs and the step before. Commit: Quipu accepts the step only if the run has not moved. Above Perform are the three kinds of performer, and the definition names one for each step. Code is a declared command run by the driver with no model involved. For an agent, Chaski sees an unclaimed step and Shantytown starts a short-lived agent of the step&#x27;s type. For a person, the step opens an Ask in Seeds, Rikuy shows it and the answer is signed with a passkey. Below the stages is the run&#x27;s record in Quipu, one part under each stage: the definition pinned by its digest, the inputs and the transaction they were read at, the outputs, a verdict for each contract, the signature, and the run&#x27;s state and revision. Offer reads the record. Every other stage writes to it.">
+  <style>
+    .t{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif}
+    .m{font-family:JetBrains Mono,Menlo,Consolas,monospace}
+    .card{fill:#20203a;stroke:#2e2e4d}
+    .pipe{stroke:#ff8a70;stroke-width:2.5;fill:none;stroke-dasharray:6 6;opacity:.75;animation:flow 1.2s linear infinite}
+    .up{stroke:#ffc24d;stroke-width:2;fill:none;stroke-dasharray:4 5;opacity:.8;animation:flow 1.6s linear infinite}
+    .down{stroke:#ff4fa0;stroke-width:2;fill:none;stroke-dasharray:4 5;opacity:.8;animation:flow 1.6s linear infinite reverse}
+    @keyframes flow{to{stroke-dashoffset:-24}}
+    @media (prefers-reduced-motion: reduce){.pipe,.up,.down{animation:none}}
+  </style>
+  <rect width="960" height="650" rx="20" fill="#12121f"/>
+  <text class="t" x="40" y="52" fill="#ecebf5" font-size="24" font-weight="700">One step, from offer to signed record</text>
+  <text class="t" x="40" y="78" fill="#a7a6c2" font-size="14">Code decides what may happen next. Agents and people do the work a step asks for.</text>
+  <text class="t" x="110" y="118" fill="#ffc24d" font-size="10" font-weight="700" letter-spacing="1">WHO PERFORMS A STEP</text>
+  <text class="t" x="262" y="118" fill="#6f6e8f" font-size="12">the definition names one for each step</text>
+  <rect x="110" y="130" width="236" height="100" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="126" y="156" fill="#ecebf5" font-size="16" font-weight="700">Code</text>
+  <text class="t" x="126" y="178.0" fill="#a7a6c2" font-size="12.5">A declared command, run by the</text>
+  <text class="t" x="126" y="195.2" fill="#a7a6c2" font-size="12.5">driver. No model is involved.</text>
+  <rect x="362" y="130" width="236" height="100" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="378" y="156" fill="#ecebf5" font-size="16" font-weight="700">Agent</text>
+  <text class="t" x="378" y="178.0" fill="#a7a6c2" font-size="12.5">Chaski sees an unclaimed step.</text>
+  <text class="t" x="378" y="195.2" fill="#a7a6c2" font-size="12.5">Shantytown starts a short-lived</text>
+  <text class="t" x="378" y="212.4" fill="#a7a6c2" font-size="12.5">agent of the step&#x27;s type.</text>
+  <rect x="614" y="130" width="236" height="100" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="630" y="156" fill="#ecebf5" font-size="16" font-weight="700">Person</text>
+  <text class="t" x="630" y="178.0" fill="#a7a6c2" font-size="12.5">The step opens an Ask in Seeds.</text>
+  <text class="t" x="630" y="195.2" fill="#a7a6c2" font-size="12.5">Rikuy shows it, and the answer</text>
+  <text class="t" x="630" y="212.4" fill="#a7a6c2" font-size="12.5">is signed with a passkey.</text>
+  <rect x="30" y="276" width="138" height="166" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="43" y="300" fill="#ffc24d" font-size="9" font-weight="700" letter-spacing="0.8">DRIVER</text>
+  <text class="t" x="43" y="326" fill="#ecebf5" font-size="15" font-weight="700">Offer</text>
+  <text class="m" x="43" y="347" fill="#ff4fa0" font-size="11">shuttle tick</text>
+  <text class="t" x="43" y="370.0" fill="#a7a6c2" font-size="12">Lists the steps</text>
+  <text class="t" x="43" y="386.6" fill="#a7a6c2" font-size="12">that are legal</text>
+  <text class="t" x="43" y="403.2" fill="#a7a6c2" font-size="12">from the run&#x27;s</text>
+  <text class="t" x="43" y="419.8" fill="#a7a6c2" font-size="12">state.</text>
+  <rect x="182" y="276" width="138" height="166" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="195" y="300" fill="#ffc24d" font-size="9" font-weight="700" letter-spacing="0.8">DRIVER</text>
+  <text class="t" x="195" y="326" fill="#ecebf5" font-size="15" font-weight="700">Bind inputs</text>
+  <text class="m" x="195" y="347" fill="#ff4fa0" font-size="11">inputs</text>
+  <text class="t" x="195" y="370.0" fill="#a7a6c2" font-size="12">Resolves each</text>
+  <text class="t" x="195" y="386.6" fill="#a7a6c2" font-size="12">named input to</text>
+  <text class="t" x="195" y="403.2" fill="#a7a6c2" font-size="12">entities in Quipu.</text>
+  <rect x="334" y="276" width="138" height="166" rx="14" fill="#20203a" stroke="#ff4fa0" stroke-width="1.6"/>
+  <text class="t" x="347" y="300" fill="#ffc24d" font-size="9" font-weight="700" letter-spacing="0.8">PERFORMER</text>
+  <text class="t" x="347" y="326" fill="#ecebf5" font-size="15" font-weight="700">Perform</text>
+  <text class="m" x="347" y="347" fill="#ff4fa0" font-size="11">performer</text>
+  <text class="t" x="347" y="370.0" fill="#a7a6c2" font-size="12">Does the work the</text>
+  <text class="t" x="347" y="386.6" fill="#a7a6c2" font-size="12">step asks for and</text>
+  <text class="t" x="347" y="403.2" fill="#a7a6c2" font-size="12">writes its</text>
+  <text class="t" x="347" y="419.8" fill="#a7a6c2" font-size="12">outputs.</text>
+  <rect x="486" y="276" width="138" height="166" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="499" y="300" fill="#ffc24d" font-size="9" font-weight="700" letter-spacing="0.8">DRIVER</text>
+  <text class="t" x="499" y="326" fill="#ecebf5" font-size="15" font-weight="700">Check outputs</text>
+  <text class="m" x="499" y="347" fill="#ff4fa0" font-size="11">outputs</text>
+  <text class="t" x="499" y="370.0" fill="#a7a6c2" font-size="12">Tests each output</text>
+  <text class="t" x="499" y="386.6" fill="#a7a6c2" font-size="12">against its</text>
+  <text class="t" x="499" y="403.2" fill="#a7a6c2" font-size="12">contract. Only a</text>
+  <text class="t" x="499" y="419.8" fill="#a7a6c2" font-size="12">pass advances.</text>
+  <rect x="638" y="276" width="138" height="166" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="651" y="300" fill="#ffc24d" font-size="9" font-weight="700" letter-spacing="0.8">PERFORMER&#x27;S KEY</text>
+  <text class="t" x="651" y="326" fill="#ecebf5" font-size="15" font-weight="700">Sign</text>
+  <text class="m" x="651" y="347" fill="#ff4fa0" font-size="11">shuttle-signer</text>
+  <text class="t" x="651" y="370.0" fill="#a7a6c2" font-size="12">Binds the step to</text>
+  <text class="t" x="651" y="386.6" fill="#a7a6c2" font-size="12">its inputs, its</text>
+  <text class="t" x="651" y="403.2" fill="#a7a6c2" font-size="12">outputs and the</text>
+  <text class="t" x="651" y="419.8" fill="#a7a6c2" font-size="12">step before.</text>
+  <rect x="790" y="276" width="138" height="166" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="803" y="300" fill="#ffc24d" font-size="9" font-weight="700" letter-spacing="0.8">QUIPU</text>
+  <text class="t" x="803" y="326" fill="#ecebf5" font-size="15" font-weight="700">Commit</text>
+  <text class="m" x="803" y="347" fill="#ff4fa0" font-size="11">compare-and-set</text>
+  <text class="t" x="803" y="370.0" fill="#a7a6c2" font-size="12">Accepts the step</text>
+  <text class="t" x="803" y="386.6" fill="#a7a6c2" font-size="12">only if the run</text>
+  <text class="t" x="803" y="403.2" fill="#a7a6c2" font-size="12">has not moved.</text>
+  <path class="pipe" d="M169 320 H174"/>
+  <polygon points="181,320 172,315 172,325" fill="#ff8a70"/>
+  <path class="pipe" d="M321 320 H326"/>
+  <polygon points="333,320 324,315 324,325" fill="#ff8a70"/>
+  <path class="pipe" d="M473 320 H478"/>
+  <polygon points="485,320 476,315 476,325" fill="#ff8a70"/>
+  <path class="pipe" d="M625 320 H630"/>
+  <polygon points="637,320 628,315 628,325" fill="#ff8a70"/>
+  <path class="pipe" d="M777 320 H782"/>
+  <polygon points="789,320 780,315 780,325" fill="#ff8a70"/>
+  <path class="up" d="M228.0 232 V250"/>
+  <path class="up" d="M480.0 232 V250"/>
+  <path class="up" d="M732.0 232 V250"/>
+  <path class="up" d="M228.0 250 H732.0"/>
+  <path class="up" d="M403.0 250 V266"/>
+  <polygon points="403.0,274 398.0,265 408.0,265" fill="#ffc24d"/>
+  <rect x="30" y="500" width="898" height="120" rx="14" fill="#20203a" stroke="#2e2e4d" stroke-width="1.2"/>
+  <text class="t" x="46" y="524" fill="#ffc24d" font-size="10" font-weight="700" letter-spacing="1">THE RUN&#x27;S RECORD IN QUIPU</text>
+  <path class="up" d="M99.0 496 V454"/>
+  <polygon points="99.0,445 94.0,454 104.0,454" fill="#ffc24d"/>
+  <text class="t" x="43" y="552" fill="#ecebf5" font-size="13.5" font-weight="700">Definition</text>
+  <text class="t" x="43" y="572.0" fill="#a7a6c2" font-size="11.5">Pinned by its</text>
+  <text class="t" x="43" y="587.9" fill="#a7a6c2" font-size="11.5">digest when the run</text>
+  <text class="t" x="43" y="603.8" fill="#a7a6c2" font-size="11.5">starts.</text>
+  <path class="down" d="M251.0 446 V488"/>
+  <polygon points="251.0,497 246.0,488 256.0,488" fill="#ff4fa0"/>
+  <text class="t" x="195" y="552" fill="#ecebf5" font-size="13.5" font-weight="700">Inputs</text>
+  <text class="t" x="195" y="572.0" fill="#a7a6c2" font-size="11.5">Which entities,</text>
+  <text class="t" x="195" y="587.9" fill="#a7a6c2" font-size="11.5">read at which</text>
+  <text class="t" x="195" y="603.8" fill="#a7a6c2" font-size="11.5">transaction.</text>
+  <path class="down" d="M403.0 446 V488"/>
+  <polygon points="403.0,497 398.0,488 408.0,488" fill="#ff4fa0"/>
+  <text class="t" x="347" y="552" fill="#ecebf5" font-size="13.5" font-weight="700">Outputs</text>
+  <text class="t" x="347" y="572.0" fill="#a7a6c2" font-size="11.5">What the performer</text>
+  <text class="t" x="347" y="587.9" fill="#a7a6c2" font-size="11.5">wrote.</text>
+  <path class="down" d="M555.0 446 V488"/>
+  <polygon points="555.0,497 550.0,488 560.0,488" fill="#ff4fa0"/>
+  <text class="t" x="499" y="552" fill="#ecebf5" font-size="13.5" font-weight="700">Verdicts</text>
+  <text class="t" x="499" y="572.0" fill="#a7a6c2" font-size="11.5">Pass, fail or</text>
+  <text class="t" x="499" y="587.9" fill="#a7a6c2" font-size="11.5">unknown for each</text>
+  <text class="t" x="499" y="603.8" fill="#a7a6c2" font-size="11.5">contract.</text>
+  <path class="down" d="M707.0 446 V488"/>
+  <polygon points="707.0,497 702.0,488 712.0,488" fill="#ff4fa0"/>
+  <text class="t" x="651" y="552" fill="#ecebf5" font-size="13.5" font-weight="700">Signature</text>
+  <text class="t" x="651" y="572.0" fill="#a7a6c2" font-size="11.5">Who signed, and</text>
+  <text class="t" x="651" y="587.9" fill="#a7a6c2" font-size="11.5">with which key.</text>
+  <path class="down" d="M859.0 446 V488"/>
+  <polygon points="859.0,497 854.0,488 864.0,488" fill="#ff4fa0"/>
+  <text class="t" x="803" y="552" fill="#ecebf5" font-size="13.5" font-weight="700">State</text>
+  <text class="t" x="803" y="572.0" fill="#a7a6c2" font-size="11.5">The run&#x27;s state and</text>
+  <text class="t" x="803" y="587.9" fill="#a7a6c2" font-size="11.5">its revision.</text>
+  <text class="t" x="40" y="640" fill="#6f6e8f" font-size="12">Gold: read from the record or handed to a stage. Pink: written to the record.</text>
+</svg>
