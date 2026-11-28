@@ -1,93 +1,160 @@
 <p align="center"><img src="assets/thread-workshop/shuttle.png" width="704" alt="shuttle: A wooden shuttle crosses ordered warp threads. Original pixel art in the Thread Workshop style."/></p>
 
+<h1 align="center">shuttle</h1>
+
 <p align="center">
-  <img src="assets/logo.svg" width="220" alt="Shuttle logo — a weaving shuttle carrying a red weft thread through vertical warp threads, with a small knot seal below"/>
+  <em>🧵 Workflows where every step is checked, signed and kept in Quipu.</em>
 </p>
 
-# Shuttle
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"/></a>
+  <a href="https://github.com/intigraph/shuttle/actions/workflows/ci.yml"><img src="https://github.com/intigraph/shuttle/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://github.com/intigraph/tambo"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the Quipu stack"/></a>
+</p>
 
-Signed agent workflows with append-only execution records. Steps link back
-to work items and export their evidence to Quipu.
+**Shuttle records workflow runs for people who run agents and need proof of
+what each one did. It comes as a CLI and a small signing service.** You
+declare a workflow as states and the steps between them. Shuttle refuses a
+step that is not legal from the current state, signs each step that is, and
+exports the history to Quipu, where anyone can check the signatures. It has no
+daemon: a person, an agent or a timer advances a run.
 
 ## Why you would want it
 
-- **Keep workflow evidence:** append a signed record for each transition.
-- **Check legal steps:** advance runs according to their declared state machine.
-- **Share completed history:** export evidence to governed Quipu graphs.
+- **Refuse a step out of order.** A run moves only along a step the workflow
+  declares, and the refusal names the steps that are legal.
+- **Prove which key signed each step.** Every transition carries an ed25519
+  signature that `shuttle verify` checks from the graph, against public keys a
+  person registered.
+- **Keep history nobody can edit.** The local log is append-only. Exports land
+  in monthly Quipu graphs, and a finished month can be frozen and still
+  queried.
+- **Let a work item do a step.** A step can open a Seeds work item and advance
+  when that item closes.
 
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/scbrown/shuttle/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/intigraph/shuttle/main/install.sh | sh
 ```
 
-Python 3.11+ with venv/pip, curl, and a Linux or macOS shell. Downloads the latest checksummed wheel into its own virtual environment;
-command links go in `~/.local/bin`. Add that directory to `PATH`.
-
-Set `STACK_INSTALL_ROOT` on the receiving shell for another prefix.
-Pinned releases, alternatives, configuration and removal are in the
-[installation and usage reference](docs/installation-reference.md).
-
-## First success in three commands
-
-![Animated terminal: Define a local workflow, advance through signed steps, and inspect its terminal state](docs/demos/terminal/demo.svg)
-
-The public fixture uses private local state and demo keys; nothing is registered or exported.
-[Read the transcript](docs/demos/terminal/transcript.txt) or
-[reproduce the recording](docs/demos/terminal.md).
-
-Check the installed workflow engine:
+This needs Python 3.11 or newer with `venv` and `pip`, `curl`, and Linux or
+macOS. It downloads the latest release wheel, checks it against the published
+checksum and installs it into its own virtual environment. Add `~/.local/bin`
+to `PATH`, then check it:
 
 ```sh
 shuttle version
 ```
 
-[Create a workflow](docs/installation-reference.md#quick-start) when you are ready
-to register an agent identity. Installation does not enroll a key or run a workflow.
+The [installation reference](https://intigraph.github.io/shuttle/installation-reference.html)
+covers pinned releases, other install routes and removal.
 
-![Conceptual mechanism: Each legal transition leaves signed evidence](docs/demos/mechanism.svg)
+## First success in three commands
+
+Fetch the example workflow, start a run and take its first step. Everything
+stays on this machine: nothing is registered or exported.
+
+```sh
+curl -fsSLO https://raw.githubusercontent.com/intigraph/shuttle/main/examples/triage.json
+shuttle define triage.json && shuttle start triage run-1 --agent you
+shuttle advance run-1 --step claim --agent you
+```
+
+You should see this, with the current month as the window:
+
+```text
+defined workflow 'triage' (record 0)
+started run 'run-1' of 'triage' in state 'open' (window 2026-11)
+run 'run-1': open -[claim]-> claimed
+```
+
+Now try a step the workflow does not allow from `claimed`:
+
+```sh
+shuttle advance run-1 --step finish --agent you
+```
+
+```text
+shuttle: step 'finish' is not legal from state 'claimed'. Legal here: ['abandon', 'work']
+```
+
+![Animated terminal: Define a local workflow, advance through signed steps, and inspect its terminal state](docs/demos/terminal/demo.svg)
+
+The recording uses its own local keys and state.
+[Read the transcript](docs/demos/terminal/transcript.txt) or
+[reproduce it](docs/demos/terminal.md).
 
 ## On your own data
 
-| You want to | Run |
+| you want to | run |
 |---|---|
-| Define a workflow | `shuttle define examples/triage.json` |
-| Inspect local run state | `shuttle status` |
-| Inspect available operations | `shuttle --help` |
+| Declare your own workflow | `shuttle define my-workflow.json` |
+| See every run and its state | `shuttle status` |
+| Let Seeds work items perform steps | `shuttle reconcile --agent you` |
+| Send the history to Quipu | `shuttle export` |
+| Check a run's signatures from the graph | `shuttle verify run-1` |
+| Archive a finished month | `shuttle freeze-window 2026-10` |
 
-The [quick-start reference](docs/installation-reference.md#quick-start)
-covers identity setup, starting runs, signed advances and export. The embedded
-recording uses isolated local keys and state; it registers and exports nothing.
+A workflow file names its initial state, its terminal states and each step as
+`from`, `to` and a name: see [`examples/triage.json`](examples/triage.json).
+`export`, `verify` and `freeze-window` need a Quipu server, set with
+`QUIPU_SERVER`. `shuttle --help` lists every command.
+[Install and operate](https://intigraph.github.io/shuttle/operating.html)
+has the settings, and [Seed steps](https://intigraph.github.io/shuttle/seed-steps.html)
+explains steps performed by work items.
 
 ## Wire it into your agent
 
-Configure each agent's signing identity before allowing it to advance runs.
-`shuttle keys init` prepares a key and registration material; a human registers
-the public key. Shuttle does not enroll itself. See the
-[identity and workflow reference](docs/installation-reference.md#quick-start).
-Seeds can perform configured workflow steps; reconciliation is a separate
-operation that must be explicitly configured.
+```sh
+shuttle prime
+```
+
+`shuttle prime` prints the agent primer with this machine's workflow and key
+state. The same text ships as the [Shuttle skill](skills/shuttle/SKILL.md).
+
+Give each agent its own signing key before it advances runs:
+
+```sh
+shuttle keys init agent-a --workflow triage
+```
+
+This creates the key and prints its registration for a person to load into
+Quipu. Shuttle never registers its own keys. After that, put
+`--require-existing-keys` before the subcommand so an agent can never mint a
+new identity: `shuttle --require-existing-keys advance ...`.
+
+A key file can be read by any process running as the same user, so a signature
+proves that the signer held the key, and no more. For jobs that must not be
+able to sign as each other, run the
+[signing broker](https://intigraph.github.io/shuttle/signing-broker.html),
+which keeps each job's key in its own process and signs only the steps that
+job was granted.
 
 ## Before you start
 
-The installer needs Python 3.11+ with venv/pip, curl and Linux or macOS.
-The engine uses the `cryptography` package for signatures. Keep signing keys
-private and retain the append-only local state. Quipu export and signature
-verification from the graph need a configured server and registered public keys.
+- Python 3.11 or newer. Shuttle has one dependency, the `cryptography`
+  package, for signatures.
+- Local state lives in `~/.local/state/shuttle` and keys in
+  `~/.config/shuttle/keys`. Set `SHUTTLE_STATE_DIR` and `SHUTTLE_KEY_DIR` to
+  move them. Keep the log: it is the record until it is exported.
+- Export and verification need a Quipu server and registered public keys.
+  Everything else works offline.
+- Steps performed by work items need the Seeds command, `sd`.
 
 ## What's next
 
-- [The Shuttle book](https://intigraph.github.io/shuttle/): concepts and usage.
-- [Installation reference](docs/installation-reference.md): configuration and removal.
-- [Reproduce the terminal demo](docs/demos/terminal.md): local fixture and full output.
+- [The Shuttle book](https://intigraph.github.io/shuttle/): concepts and operation.
+- [Agent primer](https://intigraph.github.io/shuttle/agent-primer.html): what an agent should do before it advances a run.
+- [Design](https://intigraph.github.io/shuttle/design/shuttle.html): signed runs, monthly windows and frozen history.
 
-### Related tools and repository knowledge
-
-- [Tambo](https://github.com/intigraph/tambo): guided stack installation and verification.
-- [Camayoc](https://github.com/scbrown/camayoc): governed memory and vocabulary.
-- [Detailed examples and agent setup](docs/installation-reference.md).
-
-**Load this repository’s graph:** public repository-pendant assets have not yet been verified. When a release supplies the archive, checksum and provenance, follow the [verified import workflow](https://intigraph.github.io/quipu/sharing/index.html): extract the share directory and use `quipu import SHARE_DIR --db repository.db`. Import stages knowledge; ROOT stays unchanged.
+**Load this repository's graph:** each release publishes a repository pendant
+with its checksum and provenance. To query Shuttle's own documentation and
+design as a graph, follow the
+[verified import workflow](https://intigraph.github.io/quipu/sharing/index.html):
+extract the share directory and run `quipu import SHARE_DIR --db repository.db`.
+Building a pendant needs pinned embedding model and tokenizer files; the input
+contract is in [`repository_share_embedding.py`](scripts/repository_share_embedding.py).
 
 ## 🧺 The stack
 
@@ -115,18 +182,16 @@ when.
 
 <!-- stack-table:end -->
 
-
 ## Contributing
 
-Run `just check` and `just test` before submitting a change.
+```sh
+just check
+just test
+```
+
+Read [AGENTS.md](AGENTS.md) for conventions.
 
 ## 📜 License
 
-[License](LICENSE).
-
-### Repository pendant provider
-
-Repository pendant builders require explicitly pinned model and tokenizer bytes
-and an embedding dimension. The input contract is in
-[`repository_share_embedding.py`](scripts/repository_share_embedding.py). This
-source plumbing does not enable publication or qualify a provider.
+[Apache-2.0](LICENSE). Releases up to and including v0.5.0 were published under
+the MIT License and remain available under it.

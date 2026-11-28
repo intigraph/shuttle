@@ -1,6 +1,6 @@
 # Seed steps
 
-A transition can be performed by a [seeds](https://github.com/scbrown/seeds)
+A transition can be performed by a [seeds](https://github.com/intigraph/seeds)
 work item instead of by hand:
 
 ```json
