@@ -1,7 +1,7 @@
 # Design: the orchestrator
 
-**Status: proposed (2026-11-28).** Nothing on this page is built unless a
-"today" column says so. [Signed runs, windowed export, freezable history](shuttle.md)
+**Status: accepted, not built (2026-11-28).** Nothing on this page is built
+unless a "today" column says so. [Signed runs, windowed export, freezable history](shuttle.md)
 describes what Shuttle does now.
 
 Shuttle records what happened. This design makes it decide what happens next:
@@ -337,13 +337,15 @@ with `ask` contracts, and nothing waits on an agent or a person. The second is
 a repository that requires review, which adds the agent step and the
 escalation to a person.
 
-## Decisions this needs
+## Decisions
 
-| # | decision | recommendation |
+Ruled on 2026-11-28.
+
+| # | question | decision |
 |---|---|---|
-| 1 | How the signature covers inputs and outputs | Add one field, the step record's digest, as version 3. One signature then covers everything a step read and produced, and later additions change the record, not the message. Quipu has to accept version 3. |
-| 2 | Whether Shuttle runs code steps itself | Yes. Shuttle today has no executor. Running declared commands inside the tick keeps code steps out of agent sessions, and each command's reach and undo are declared in Quipu. The alternative sends every code step through a Shantytown job. |
-| 3 | How a person takes a step before passkey decisions are switched on | A Seeds work item the person closes, which works today. Move to passkey-signed answers when Rikuy's signed decisions are enabled. |
+| 1 | How the signature covers inputs and outputs | One added field, the step record's digest, as version 3. One signature covers everything a step read and produced, and later additions change the record, not the message. Quipu accepts version 3. |
+| 2 | Whether Shuttle runs code steps itself | Yes. The tick runs declared commands, which keeps code steps out of agent sessions. Each command's reach and undo are declared in Quipu. |
+| 3 | How a person takes a step before passkey decisions are switched on | A Seeds work item the person closes. It moves to passkey-signed answers when Rikuy's signed decisions are enabled. |
 | 4 | When Quipu's enforcement is switched on | Last, as phase 5. It needs every writer on version 2 or later and the existing registrations moved under the trust root. Until then Shuttle checks what Quipu will later enforce. |
 
 ## What stays the same

@@ -8,6 +8,6 @@
 - [Seed steps](seed-steps.md)
 - [Signing broker](signing-broker.md)
 - [Design](design/shuttle.md)
-  - [The orchestrator (proposed)](design/orchestrator.md)
+  - [The orchestrator](design/orchestrator.md)
 - [Releasing](releasing.md)
 - [Changelog](changelog.md)
