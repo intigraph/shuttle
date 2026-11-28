@@ -253,7 +253,13 @@ class BrokerProcess(unittest.TestCase):
                     f.read(1)
         with self.assertRaises(PermissionError):
             os.listdir(f"/proc/{proc.pid}/fd")
-        self.assertEqual(os.stat(f"/proc/{proc.pid}/mem").st_uid, 0)
+        # A user namespace can leave root unmapped: procfs then exposes
+        # overflowuid while the same access-denial controls above still hold.
+        mappings = [tuple(map(int, line.split()))
+                    for line in Path('/proc/self/uid_map').read_text().splitlines()]
+        root_mapped = any(inside == 0 and count > 0 for inside, outside, count in mappings)
+        owner = 0 if root_mapped else int(Path('/proc/sys/kernel/overflowuid').read_text())
+        self.assertEqual(os.stat(f"/proc/{proc.pid}/mem").st_uid, owner)
         # Nothing was written to disk: the key lives only in memory.
         self.assertEqual(sorted(p.name for p in home.iterdir()), [])
         self.assertEqual(sorted(p.name for p in sock.parent.iterdir()), ["home", "signer.sock"])

@@ -85,7 +85,11 @@ class CliFlowTests(EnvIsolatedCase):
 
     def test_strict_cli_refuses_missing_key_before_transition_and_export(self):
         self.run_cli("define", self._define())
+        self.assertEqual(2, self.run_cli("--require-existing-keys", "start", "triage",
+                                       "strict-run", "--agent", "agent-a")[0])
+        self.assertEqual(1, len(state.records()))
         self.run_cli("start", "triage", "strict-run", "--agent", "agent-a")
+        (Path(self._keys.name) / "agent-a.pk8").unlink()
         before = list(state.records())
         code, _ = self.run_cli("--require-existing-keys", "advance", "strict-run",
                                "--step", "claim", "--agent", "agent-a")
@@ -100,9 +104,8 @@ class CliFlowTests(EnvIsolatedCase):
         with mock.patch.object(qc, "probe_graph_kinds", return_value=[]):
             self.assertEqual(2, self.run_cli("--require-existing-keys", "export")[0])
         self.assertFalse(key.exists())
-        # Earlier unsigned definition/start records may drain; the signed
-        # transition remains pending at its exact sequence.
-        self.assertEqual(2, state.watermark())
+        # The signed start is now the first pending integrity check.
+        self.assertEqual(1, state.watermark())
         self.assertFalse(any("TransitionEvent" in body.get("turtle", "")
                              for _, body in self.posts))
 

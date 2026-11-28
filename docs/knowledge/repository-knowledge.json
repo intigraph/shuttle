@@ -15,8 +15,8 @@
       "kind": "interface",
       "source": "shuttle/cli.py",
       "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fcli.py",
-      "summary": "The CLI defines and advances workflows, exports history, verifies signatures and freezes windows. It has no HTTP or MCP server.",
-      "source_sha256": "33d945358af48e0aceea367e4bc969bdb70757e93ca7d3e59ca02ddb92631d83",
+      "summary": "The CLI defines immutable workflow names, signs run starts and transitions, exports complete history, verifies signatures using Quipu alone and freezes windows.",
+      "source_sha256": "617da5fcf8bcb59ff5f6e70c2dff4eb7cb7ed4d6fd3103a396b47e015f9496a4",
       "properties": {
         "interfaceKind": "CLI",
         "publicName": "shuttle"
@@ -38,7 +38,7 @@
       "source": "shuttle/signing.py",
       "subject": "http://aegis.gastown.local/ontology/code/shuttle/shuttle%2Fsigning.py",
       "summary": "SHUTTLE_KEY_DIR selects agent key storage; require-existing-key mode refuses missing or unsafe key files and does not create replacements.",
-      "source_sha256": "28846cac3874b68524c3d60f041cce1091517b7e247dbdd7641f5d0ebda171fe",
+      "source_sha256": "00ab02be96c2f7a2ea2a1a573e2701b594064961040a60883d348885525d57a5",
       "properties": {
         "interfaceKind": "config",
         "publicName": "SHUTTLE_KEY_DIR / existing_keys_only"

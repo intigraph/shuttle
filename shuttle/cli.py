@@ -18,6 +18,8 @@ from pathlib import Path
 from . import __version__
 from . import export as export_mod
 from . import model, quipu_client as qc, seeds, signing, state, windows
+from . import verification, record_cli
+from .record_cli import cmd_keys_init
 
 
 def now_iso() -> str:
@@ -70,39 +72,15 @@ def _run_state(defs, runs, run_id: str) -> tuple[model.Definition, dict, str]:
     return defn, run, model.fold_transitions(defn, run["events"])
 
 
-def cmd_keys_init(args) -> int:
-    wf = export_mod.workflow_iri(args.workflow) if args.workflow else f"{export_mod.entity_ns()}workflow:*"
-    print(f"agent:      {args.agent}")
-    print(f"public key: {signing.public_key_hex(args.agent)}")
-    print()
-    print("# Registration Turtle — review and load into the IDENTITY graph")
-    print("# (dataKind=identity, never frozen) YOURSELF; shuttle never")
-    print("# registers its own keys. The trust root stays human-owned.")
-    print(signing.registration_turtle(args.agent, wf))
-    return 0
-
-
 def cmd_define(args) -> int:
     raw = json.loads(Path(args.file).read_text())
     defn = model.parse_definition(raw)  # refuse before recording
-    rec = {
-        "type": "define",
-        "name": defn.name,
-        "initial": defn.initial,
-        "terminal": list(defn.terminal),
-        "transitions": [
-            {
-                "step": t.step,
-                "from": t.from_state,
-                "to": t.to_state,
-                **({"seed": t.seed} if t.seed else {}),
-                **({"on_abandon": t.on_abandon} if t.on_abandon else {}),
-            }
-            for t in defn.transitions
-        ],
-        "at": args.at or now_iso(),
-    }
-    seq = state.append(rec)
+    rec = {**raw, "type": "define", "name": defn.name, "at": args.at or now_iso()}
+    with state.locked():
+        defs, _ = _index()
+        if defn.name in defs:
+            raise CliError(f"workflow '{defn.name}' already exists; use a new name")
+        seq = state.append(rec)
     print(f"defined workflow '{defn.name}' (record {seq})")
     return 0
 
@@ -122,6 +100,7 @@ def cmd_start(args) -> int:
         "agent": args.agent,
         "at": at,
     }
+    rec["signature"] = signing.sign_start(rec, export_mod.run_iri(args.run))
     state.append(rec)
     print(
         f"started run '{args.run}' of '{args.definition}' in state "
@@ -240,83 +219,14 @@ def cmd_export(args) -> int:
 
 
 def cmd_verify(args) -> int:
-    """Re-verify a run's transitions FROM THE GRAPH — the consumer-side
-    check, workable against a hot or a frozen window (cold composition)."""
-    defs, runs = _index()
-    _, run, _ = _run_state(defs, runs, args.run)
-    r = export_mod.run_iri(args.run)
-    v = export_mod.vocabulary
-    rows = qc.query(
-        f"SELECT ?ev ?step ?from ?to ?at ?agent ?sig WHERE {{ "
-        f"{v.pattern('?ev', 'inRun', '<'+r+'>')} {v.pattern('?ev', 'atStep', '?step')} "
-        f"{v.pattern('?ev', 'fromState', '?from')} {v.pattern('?ev', 'toState', '?to')} "
-        f"?ev <{export_mod.PROV}endedAtTime> ?at . "
-        f"{v.pattern('?ev', 'performedBy', '?agent')} {v.pattern('?ev', 'signature', '?sig')} }}",
-        graph=windows.window_iri(run["window"]),
-    ).get("rows", [])
-    if not rows:
-        raise CliError(
-            f"no exported transitions found for run '{args.run}' in window "
-            f"{run['window']} — export first, or the window moved"
-        )
-    regs = qc.query(
-        f"SELECT ?verifier ?pk WHERE {{ ?reg a ?registrationType . "
-        f"{v.pattern('?reg', 'verifier', '?verifier')} {v.pattern('?reg', 'publicKey', '?pk')} "
-        f"{v.type_filter('?registrationType', 'VerifierRegistration')} }}",
-        graph=args.identity_graph,
-    ).get("rows", [])
-    keys = {row["verifier"]: row["pk"] for row in regs}
-    bad = 0
-    for row in rows:
-        agent = row["agent"].rsplit(":", 1)[-1]
-        step = row["step"].rsplit("/", 1)[-1]
-        pk = keys.get(agent)
-        if pk is None:
-            print(f"UNREGISTERED: {row['ev']} performed by '{agent}' has no key in the identity graph")
-            bad += 1
-            continue
-        ok = signing.verify_transition(
-            pk, row["sig"], r, step, row["from"], row["to"], row["at"], agent
-        )
-        if not ok:
-            print(f"BAD SIGNATURE: {row['ev']}")
-            bad += 1
-    if bad:
-        print(f"{bad} of {len(rows)} transitions FAILED verification")
-        return 1
-    print(f"all {len(rows)} exported transitions verify")
-    return 0
+    try:
+        return verification.verify(args.run, args.identity_graph)
+    except verification.VerificationError as exc:
+        raise CliError(str(exc)) from exc
 
 
 def cmd_import_run(args) -> int:
-    """Import a foreign transitions JSONL (the NeuralAmplifier export shape)
-    as a complete run: define (if carried), start, then each transition
-    signed by the IMPORTING agent — the importer attests the mapping, since
-    the original system did not sign shuttle messages."""
-    lines = [json.loads(x) for x in Path(args.file).read_text().splitlines() if x.strip()]
-    if not lines:
-        raise CliError(f"{args.file} holds no records")
-    defs, runs = _index()
-    for rec in lines:
-        t = rec.get("type")
-        if t == "define":
-            if rec["name"] not in defs:
-                model.parse_definition(rec)  # refuse before recording
-                state.append(rec)
-        elif t == "start":
-            if rec["run"] in runs:
-                raise CliError(f"run '{rec['run']}' already exists; refusing to merge histories")
-            state.append({**rec, "agent": args.agent})
-        elif t == "transition":
-            at = rec["at"]
-            sig = signing.sign_transition(
-                args.agent, export_mod.run_iri(rec["run"]), rec["step"], rec["from"], rec["to"], at
-            )
-            state.append({**rec, "agent": args.agent, "signature": sig})
-        else:
-            raise CliError(f"unknown record type {t!r} in {args.file}")
-    print(f"imported {len(lines)} records from {args.file} (signed by '{args.agent}')")
-    return 0
+    return record_cli.import_run(args, *_index())
 
 
 def cmd_freeze_window(args) -> int:

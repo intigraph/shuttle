@@ -24,6 +24,7 @@ consumers re-verify from the graph via `shuttle verify`.
 from __future__ import annotations
 
 import os
+import json
 
 from . import quipu_client as qc
 from . import signing, state, windows, vocabulary
@@ -57,11 +58,17 @@ def _prefixes() -> str:
     return vocabulary.prefixes() + f"@prefix prov: <{PROV}> .\n"
 
 
+def record_turtle(subject: str, rec: dict) -> str:
+    """Lossless JSON literal: complete definition or event evidence, no new ontology."""
+    payload = json.dumps(rec, sort_keys=True, ensure_ascii=True)
+    return f'<{subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#value> {json.dumps(payload)} .'
+
+
 def definition_turtle(rec: dict) -> str:
     """A WorkflowDefinition and its declared steps — durable knowledge shape,
     but exported beside the runs so the window is self-describing."""
     wf = workflow_iri(rec["name"])
-    lines = [_prefixes(), f"<{wf}> a qp:WorkflowDefinition ."]
+    lines = [_prefixes(), f"<{wf}> a qp:WorkflowDefinition .", record_turtle(wf, rec)]
     for t in rec["transitions"]:
         step = f"{wf}/step/{t['step']}"
         lines.append(f"<{wf}> core:hasStep <{step}> .")
@@ -78,6 +85,8 @@ def start_turtle(rec: dict) -> str:
         + f'    core:currentState "{rec["state"]}" ;\n'
         + f'    core:createdAt "{rec["at"]}" ;\n'
         + f'    core:sourceKind "observed" .\n'
+        + (f'<{r}> core:signature "{rec["signature"]}" .\n' if rec.get("signature") else "")
+        + record_turtle(r, rec) + "\n"
     )
 
 
@@ -96,6 +105,7 @@ def transition_turtle(rec: dict, seq: int) -> str:
         + f'    core:performedBy <{entity_ns()}agent:{rec["agent"]}> ;\n'
         + f'    core:signature "{rec["signature"]}" ;\n'
         + f'    core:sourceKind "observed" .\n'
+        + record_turtle(ev, rec) + "\n"
         + f'<{r}> core:currentState "{rec["to"]}" .\n'
     )
 
@@ -151,6 +161,10 @@ def _knot_for(rec: dict, seq: int) -> dict:
 def verify_own_signature(rec: dict) -> None:
     """Fail fast on key drift BEFORE export: the record's signature must
     verify under the agent's current local key."""
+    if rec.get("type") == "start":
+        if not signing.verify_start(signing.public_key_hex(rec["agent"]), rec, run_iri(rec["run"])):
+            raise ExportError("run start signature missing or invalid; refusing export")
+        return
     ok = signing.verify_transition(
         signing.public_key_hex(rec["agent"]),
         rec["signature"],
@@ -223,7 +237,7 @@ def export(root=None, strict: bool = False) -> dict:
         # forever, which is a worse silent loss than the stall the quarantine
         # exists to prevent. Key drift and a tampered log must still stop the
         # drain.
-        if rec.get("type") == "transition":
+        if rec.get("type") in ("start", "transition"):
             verify_own_signature(rec)
 
         try:

@@ -15,7 +15,7 @@ from unittest.mock import patch
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = {'kind': 'wheel', 'package': 'shuttle', 'assets': ['shuttle-{version}-py3-none-any.whl'], 'checksum': 'checksums.txt', 'commands': ['shuttle'], 'repo': 'shuttle'}
+CONFIG = {'kind': 'wheel', 'package': 'shuttle', 'assets': ['shuttle-{version}-py3-none-any.whl'], 'checksum': 'checksums.txt', 'commands': ['shuttle', 'shuttle-signer'], 'repo': 'shuttle'}
 TAG = 'v1.2.3'
 VERSION = '1.2.3'
 
