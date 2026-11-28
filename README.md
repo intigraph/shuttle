@@ -13,11 +13,13 @@
 </p>
 
 **Shuttle records workflow runs for people who run agents and need proof of
-what each one did. It comes as a CLI and a small signing service.** You
+what each one did. It comes as a CLI.** You
 declare a workflow as states and the steps between them. Shuttle refuses a
 step that is not legal from the current state, signs each step that is, and
 exports the history to Quipu, where anyone can check the signatures. It has no
 daemon: a person, an agent or a timer advances a run.
+
+<p align="center"><img src="docs/diagrams/run-record.svg" width="900" alt="How a run becomes a record you can check. A person or an agent, a Seeds work item, or a Chaski schedule takes a step. Shuttle checks that the step is legal, signs it and appends it to a local log on that machine. Export sends the log to Quipu, which holds this month's graph, the frozen months and the registered public keys. Verify reads a run back from Quipu and checks every signature. Shantytown, a dashboard or your own query reads runs from Quipu and never calls Shuttle."/></p>
 
 ## Why you would want it
 
@@ -126,10 +128,10 @@ new identity: `shuttle --require-existing-keys advance ...`.
 
 A key file can be read by any process running as the same user, so a signature
 proves that the signer held the key, and no more. For jobs that must not be
-able to sign as each other, run the
-[signing broker](https://intigraph.github.io/shuttle/signing-broker.html),
-which keeps each job's key in its own process and signs only the steps that
-job was granted.
+able to sign as each other, the
+[signing broker](https://intigraph.github.io/shuttle/signing-broker.html)
+keeps each job's key in its own process and signs only the steps that job was
+granted. The broker is in the source tree and is not in release 0.9.1.
 
 ## Before you start
 
