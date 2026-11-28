@@ -4,7 +4,7 @@
 frozen.*
 
 Shuttle has no daemon, no queue, no server and no dashboard. A **local JSONL
-log is the hot path**, and [quipu](https://github.com/scbrown/quipu) is the
+log is the hot path**, and [quipu](https://github.com/intigraph/quipu) is the
 governed record. Runs move through their workflow's declared steps. Every
 transition is **signed by the agent that performed it** (per-agent ed25519).
 The append-only history is exported into quipu's time-windowed operational
@@ -26,11 +26,11 @@ Consumers read the graph, never shuttle.
   shantytown · creel · NeuralAmplifier    (read the graph, never shuttle)
 ```
 
-- [camayoc](https://github.com/scbrown/camayoc) owns the vocabulary: the
+- [camayoc](https://github.com/intigraph/camayoc) owns the vocabulary: the
   workflow slice (`WorkflowRun`, `TransitionEvent`, …).
 - [tambo](https://github.com/intigraph/tambo) installs and verifies
   shuttle as a stack member.
-- [seeds](https://github.com/scbrown/seeds) work items can perform a step
+- [seeds](https://github.com/intigraph/seeds) work items can perform a step
   (see [Seed steps](seed-steps.md)).
 
 ## A run, end to end

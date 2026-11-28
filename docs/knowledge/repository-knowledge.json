@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Shuttle records signed agent workflow transitions in append-only records and exports their evidence to Quipu.",
-      "source_sha256": "0095ed7bfd1f31eb3e0642597616ba5f73065ef09fbe3571a3f7dc1fe8af1f88",
+      "source_sha256": "c4a7a9d0a24abc533120d581740f047e807d00349f2f7c8768fca095daeddc52",
       "type": "Concept"
     },
     {
@@ -100,7 +100,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/README.md",
       "summary": "Begin with the workflow quick start and role in the stack; registration and production writes remain explicit operator actions.",
-      "source_sha256": "0095ed7bfd1f31eb3e0642597616ba5f73065ef09fbe3571a3f7dc1fe8af1f88",
+      "source_sha256": "c4a7a9d0a24abc533120d581740f047e807d00349f2f7c8768fca095daeddc52",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Decision"
@@ -121,7 +121,7 @@
       "source": "docs/seed-steps.md",
       "subject": "http://aegis.gastown.local/ontology/doc/shuttle/docs%2Fseed-steps.md",
       "summary": "Read seed-step visit, replay and outcome semantics before connecting work-item completion to workflow transitions.",
-      "source_sha256": "af2b562361814de135058f64047c0a36d0e8b40ec490d2bc26fd1b6374071ed9",
+      "source_sha256": "ab4c37c964201a01e4ff618fda985d0bf46a00de5b1640547922d04403cb790e",
       "properties": {
         "startHereOrder": 3
       }
