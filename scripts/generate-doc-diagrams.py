@@ -158,8 +158,90 @@ def run_record():
     s.text(40, 536, "Nothing runs in the background: a person, an agent or a timer makes each call.", 12.5, DIM)
     return s.render()
 
+def step_lifecycle():
+    s = Svg(960, 650, (
+        "One step, from offer to signed record. Six stages run left to right. Offer: the driver lists the steps "
+        "that are legal from the run's state. Bind inputs: the driver resolves each named input to entities in "
+        "Quipu. Perform: the performer does the work the step asks for and writes its outputs. Check outputs: "
+        "the driver tests each output against its contract, and only a pass advances. Sign: the performer's key "
+        "binds the step to its inputs, its outputs and the step before. Commit: Quipu accepts the step only if "
+        "the run has not moved. Above Perform are the three kinds of performer, and the definition names one for "
+        "each step. Code is a declared command run by the driver with no model involved. For an agent, Chaski "
+        "sees an unclaimed step and Shantytown starts a short-lived agent of the step's type. For a person, the "
+        "step opens an Ask in Seeds, Rikuy shows it and the answer is signed with a passkey. Below the stages is "
+        "the run's record in Quipu, one part under each stage: the definition pinned by its digest, the inputs "
+        "and the transaction they were read at, the outputs, a verdict for each contract, the signature, and the "
+        "run's state and revision. Offer reads the record. Every other stage writes to it."))
+    s.text(40, 52, "One step, from offer to signed record", 24, INK, 700)
+    s.text(40, 78, "Code decides what may happen next. Agents and people do the work a step asks for.", 14)
 
-DIAGRAMS = {"run-record.svg": run_record}
+    s.text(110, 118, "WHO PERFORMS A STEP", 10, GOLD, 700, spacing="1")
+    s.text(262, 118, "the definition names one for each step", 12, DIM)
+    performers = [
+        ("Code", "A declared command, run by the driver. No model is involved."),
+        ("Agent", "Chaski sees an unclaimed step. Shantytown starts a short-lived agent of the step's type."),
+        ("Person", "The step opens an Ask in Seeds. Rikuy shows it, and the answer is signed with a passkey."),
+    ]
+    pxs, pw = [110, 362, 614], 236
+    for x, (title, cap) in zip(pxs, performers):
+        s.card(x, 130, pw, 100)
+        s.text(x + 16, 156, title, 16, INK, 700)
+        s.para(x + 16, 178, cap, pw - 30, 12.5)
+
+    xs, w, top, h = [30, 182, 334, 486, 638, 790], 138, 276, 166
+    stages = [
+        ("DRIVER", "Offer", "shuttle tick", "Lists the steps that are legal from the run's state."),
+        ("DRIVER", "Bind inputs", "inputs", "Resolves each named input to entities in Quipu."),
+        ("PERFORMER", "Perform", "performer", "Does the work the step asks for and writes its outputs."),
+        ("DRIVER", "Check outputs", "outputs", "Tests each output against its contract. Only a pass advances."),
+        ("PERFORMER'S KEY", "Sign", "shuttle-signer", "Binds the step to its inputs, its outputs and the step before."),
+        ("QUIPU", "Commit", "compare-and-set", "Accepts the step only if the run has not moved."),
+    ]
+    for x, (role, title, cmd, cap) in zip(xs, stages):
+        hot = title == "Perform"
+        s.card(x, top, w, h, stroke=PINK if hot else EDGE, sw=1.6 if hot else 1.2)
+        s.text(x + 13, top + 24, role, 9, GOLD, 700, spacing="0.8")
+        s.text(x + 13, top + 50, title, 15, INK, 700)
+        s.text(x + 13, top + 71, cmd, 11, PINK, cls="m")
+        s.para(x + 13, top + 94, cap, w - 22, 12)
+    for x in xs[:-1]:
+        s.path(f"M{x + w + 1} {top + 44} H{x + w + 6}", "pipe")
+        s.head(x + w + 13, top + 44, "right", CORAL)
+
+    # Performers feed the Perform stage.
+    cx = xs[2] + w / 2
+    for x in pxs:
+        s.path(f"M{x + pw / 2} 232 V250", "up")
+    s.path(f"M{pxs[0] + pw / 2} 250 H{pxs[2] + pw / 2}", "up")
+    s.path(f"M{cx} 250 V{top - 10}", "up")
+    s.head(cx, top - 2, "down", GOLD)
+
+    rtop = 500
+    s.card(30, rtop, 898, 120)
+    s.text(46, rtop + 24, "THE RUN'S RECORD IN QUIPU", 10, GOLD, 700, spacing="1")
+    record = [
+        ("Definition", "Pinned by its digest when the run starts.", "up"),
+        ("Inputs", "Which entities, read at which transaction.", "down"),
+        ("Outputs", "What the performer wrote.", "down"),
+        ("Verdicts", "Pass, fail or unknown for each contract.", "down"),
+        ("Signature", "Who signed, and with which key.", "down"),
+        ("State", "The run's state and its revision.", "down"),
+    ]
+    for x, (title, cap, way) in zip(xs, record):
+        mid = x + w / 2
+        if way == "up":
+            s.path(f"M{mid} {rtop - 4} V{top + h + 12}", "up")
+            s.head(mid, top + h + 3, "up", GOLD)
+        else:
+            s.path(f"M{mid} {top + h + 4} V{rtop - 12}", "down")
+            s.head(mid, rtop - 3, "down", PINK)
+        s.text(x + 13, rtop + 52, title, 13.5, INK, 700)
+        s.para(x + 13, rtop + 72, cap, w - 20, 11.5)
+    s.text(40, 640, "Gold: read from the record or handed to a stage. Pink: written to the record.", 12, DIM)
+    return s.render()
+
+
+DIAGRAMS = {"run-record.svg": run_record, "step-lifecycle.svg": step_lifecycle}
 
 if __name__ == "__main__":
     out = Path(sys.argv[1])
